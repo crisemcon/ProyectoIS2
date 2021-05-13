@@ -1,0 +1,1 @@
+ g++ program.cpp -o output -I/usr/include/mysql -lmysqlclient

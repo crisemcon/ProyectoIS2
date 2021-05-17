@@ -43,6 +43,11 @@ int consultarTipoPersona(string rut, MYSQL *connection, MYSQL_RES *res){
     Revisa que tipo de persona es el rut ingresado
 
     Si no tiene tipo, retorna -1
+
+    //0 admin
+    //1 profesor
+    //2 alumno
+    //3 apoderado
     */
     int resultado = -1;
     MYSQL_ROW row;

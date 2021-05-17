@@ -1,6 +1,10 @@
 // g++ main.cpp -o output -L/usr/include/mariadb/mysql -lmariadbclient
 #include <iostream>
 #include <mysql.h> // /usr/includes/mariadb/mysql.h
+#include <string>
+#include <cstring>
+#include <vector>
+
 
 struct connection_details
 {
@@ -30,6 +34,8 @@ MYSQL_RES* mysql_perform_query(MYSQL *connection, const char *sql_query){
     return mysql_use_result(connection);
 }
 
+using namespace std;
+
 int main(int argc, char const *argv[])
 {
     MYSQL *con;	// the connection
@@ -42,23 +48,43 @@ int main(int argc, char const *argv[])
     mysqlD.password = "password"; // the password for the database
     mysqlD.database = "ProyectoIS2";	// the databse
 
+
+    string rut;
+    cout << "Ingrese su RUT para login: ";
+    cin >> rut;
+    //cout << rut << endl;
+
     // connect to the mysql database
     con = mysql_connection_setup(mysqlD);
 
-    // get the results from executing commands
-    res = mysql_perform_query(con, "select * from Persona;");
+    // hacemos la query para ver si el rut existe
+    string consultaRut;
+    consultaRut = "select * from Persona where RUT = '" + rut + "';";
+    //para poder usar la consultaRut en mysql_perform_query
+    //debemos convertirla a una string en C, no C++
+    //por eso usamos strcpy y cstr (C string)
+    cout << consultaRut << endl;;
+    char * cstr;    
+    strcpy(cstr, consultaRut.c_str());
+    res = mysql_perform_query(con, cstr);
+    //res = mysql_perform_query(con, "select * from Persona where RUT = '12532639-0';");
 
-    std::cout << ("Database Output:\n") << std::endl;
+    //cout << ("Database Output:\n") << std::endl;
+
+    if ((row = mysql_fetch_row(res)) == NULL){
+        cout << "Rut no existe en BD\n";
+    }
+    else{
+        cout << "Persona encontrada\n";
+        cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << endl << endl; 
+    }
+
+    
 
     /*while ((row = mysql_fetch_row(res)) != NULL){
         // the below row[] parametes may change depending on the size of the table and your objective
-        std::cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << std::endl << std::endl;
-    }*/
-
-    while ((row = mysql_fetch_row(res)) != NULL){
-        // the below row[] parametes may change depending on the size of the table and your objective
         std::cout << row[0] << std::endl;
-    }
+    }*/
 
     // clean up the database result
     mysql_free_result(res);

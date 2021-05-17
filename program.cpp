@@ -50,9 +50,14 @@ int main(int argc, char const *argv[])
 
     std::cout << ("Database Output:\n") << std::endl;
 
-    while ((row = mysql_fetch_row(res)) != NULL){
+    /*while ((row = mysql_fetch_row(res)) != NULL){
         // the below row[] parametes may change depending on the size of the table and your objective
         std::cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << std::endl << std::endl;
+    }*/
+
+        while ((row = mysql_fetch_row(res)) != NULL){
+        // the below row[] parametes may change depending on the size of the table and your objective
+        std::cout << row[0] << std::endl;
     }
 
     // clean up the database result

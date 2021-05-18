@@ -37,9 +37,6 @@ MYSQL_RES* mysql_perform_query(MYSQL *connection, const char *sql_query){
 
 int consultarTipoPersona(string rut, MYSQL *connection, MYSQL_RES *res){
     /*
-    Esta funcion esta horrible, seguramente se puede hacer mas
-    bonito el codigo, pero me da lata.
-
     Revisa que tipo de persona es el rut ingresado
 
     Si no tiene tipo, retorna -1
@@ -79,11 +76,50 @@ int consultarTipoPersona(string rut, MYSQL *connection, MYSQL_RES *res){
         mysql_free_result(res);
     }
         
-
-
     return resultado;
 }
 
+
+int decretarEstadoColegio(int nivel, int estado, MYSQL *connection, MYSQL_RES *res){
+    /*
+    Retorna
+        0 error
+        1 exitoso
+    */
+
+    MYSQL_ROW row;
+    char * cstr;  
+    string consultaSQL;
+
+    if (nivel != 0){
+        cout << "Error: Usted no es administrador. No se han efectuado cambios. " << endl;
+        return 0;
+    }
+
+    consultaSQL = "update Colegio set Estado_Colegio = " + to_string(estado) + " where ID_Colegio = 0;";
+    //cout << consultaSQL << endl;  
+    
+    cerr << "1\n";
+    cstr = new char[consultaSQL.length() + 1];
+    strcpy(cstr, consultaSQL.c_str());
+
+    res = mysql_perform_query(connection, cstr);
+
+
+    //esta parte esta un poco sketchy, aun no se que se retorna exactamente a res
+    if (res != NULL){
+        cout << "Error al alterar estado" << endl;
+    }
+    else{
+        cout << "Estado alterado. Nuevo estado es: " << estado << endl;
+    }
+    // clean up the database result
+    free(cstr);
+    mysql_free_result(res);
+    
+        
+    return 1;
+}
 
 int main(int argc, char const *argv[])
 {
@@ -141,10 +177,10 @@ int main(int argc, char const *argv[])
     //2 alumno
     //3 apoderado
     int tipoPersona = consultarTipoPersona(rut, con, res);
-    cout << tipoPersona << endl;
+    //cout << tipoPersona << endl;
     
 
-
+    decretarEstadoColegio(tipoPersona, 1, con, res);
 
 
 

@@ -287,8 +287,9 @@ int main(int argc, char const *argv[])
             cout << "1. Decretar estado colegio (cuarentena o no)\n";
             cout << "2. Recibir sugerencias de accion\n";
             cout << "3. Revisar alumnos y profesores por sala junto a su estado\n";
-            cout << "4. Salir del programa\n";
-            cout << "\nEscriba 1/2/3/4 y luego presione enter para elegir opcion: \n";
+            cout << "4. Informar contagio de usted" << endl;
+            cout << "5. Salir del programa\n";
+            cout << "\nEscriba 1/2/3/4/5 y luego presione enter para elegir opcion: \n";
             int opcion;
             cin >> opcion;
             if (opcion == 1){
@@ -303,7 +304,14 @@ int main(int argc, char const *argv[])
             else if (opcion == 3){
                 //aca va el caso de uso UC6
             }
-            else if (opcion == 4){
+            else if (opcion == 4) {
+                //aca va el caso de uso UC2
+                string fechaContagio;
+                cout << "Ingrese la fecha del contagio en el formato: YYYY-MM-DD" << endl;
+                cin >> fechaContagio;
+                informarContagioPropio(rut, fechaContagio, con);
+            }
+            else if (opcion == 5){
                 cout << "Saliendo del programa...\n;";
                 break;
             }
@@ -314,7 +322,27 @@ int main(int argc, char const *argv[])
         }
         if (tipoPersona == 1){
             //si soy profe
-            
+            cout << "Usted es Profesor, tiene las siguientes opciones: " << endl;
+            cout << "1. Informar contagio de usted" << endl;
+            cout << "2. Salir del programa" << endl;
+            cout << "Escriba 1/2 y luego presione enter para elegir opcion: " << endl;
+            int opcion;
+            cin >> opcion;
+            if(opcion == 1) {
+                //aca va el caso de uso UC2
+                string fechaContagio;
+                cout << "Ingrese la fecha del contagio en el formato: YYYY-MM-DD" << endl;
+                cin >> fechaContagio;
+                informarContagioPropio(rut, fechaContagio, con);
+            }
+            else if (opcion == 2){
+                cout << "Saliendo del programa...;" << endl;
+                break;
+            }
+            else {
+                cout << "Opcion no reconocida" << endl;
+                continue;
+            }
         }
         if (tipoPersona == 2){
             //si soy alumno

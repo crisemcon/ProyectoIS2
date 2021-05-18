@@ -225,7 +225,7 @@ int main(int argc, char const *argv[])
                 //aca va el caso de uso UC6
             }
             else if (opcion == 4){
-                cout << "Saliendo del programa...\n;"
+                cout << "Saliendo del programa...\n;";
                 break;
             }
             else{

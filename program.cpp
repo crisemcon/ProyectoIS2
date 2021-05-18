@@ -113,6 +113,8 @@ int main(int argc, char const *argv[])
     //debemos convertirla a una string en C, no C++
     //por eso usamos strcpy y cstr (C string)
     char * cstr;    
+    cstr = new char[consultaRut.length() + 1];
+
     cout << consultaRut << endl;
     strcpy(cstr, consultaRut.c_str());
     res = mysql_perform_query(con, cstr);
@@ -128,6 +130,7 @@ int main(int argc, char const *argv[])
         cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << endl << endl; 
     }
 
+    free(cstr);
     // clean up the database result
     mysql_free_result(res);
 
@@ -138,12 +141,15 @@ int main(int argc, char const *argv[])
     //2 alumno
     //3 apoderado
     int tipoPersona = consultarTipoPersona(rut, con, res);
-
+    cout << tipoPersona << endl;
     
+
+
+
+
 
     // close database connection
     mysql_close(con);
-
     return 0;
 }
 

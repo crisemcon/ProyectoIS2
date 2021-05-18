@@ -67,12 +67,12 @@ int consultarTipoPersona(string rut, MYSQL *connection, MYSQL_RES *res){
         res = mysql_perform_query(connection, cstr);
 
         if ((row = mysql_fetch_row(res)) == NULL){
-            cout << "Usted no es " << roles[i] << endl;
+            //cout << "Usted no es " << roles[i] << endl;
         }
         else{
             cout << "Usted es " << roles[i] << endl;
             resultado = i;
-            cout << row[0] << endl; 
+            //cout << row[0] << endl; 
         }
         // clean up the database result
         free(cstr);
@@ -115,7 +115,7 @@ int main(int argc, char const *argv[])
     char * cstr;    
     cstr = new char[consultaRut.length() + 1];
 
-    cout << consultaRut << endl;
+    //cout << consultaRut << endl;
     strcpy(cstr, consultaRut.c_str());
     res = mysql_perform_query(con, cstr);
     //res = mysql_perform_query(con, "select * from Persona where RUT = '12532639-0';");
@@ -123,11 +123,11 @@ int main(int argc, char const *argv[])
     //cout << ("Database Output:\n") << std::endl;
 
     if ((row = mysql_fetch_row(res)) == NULL){
-        cout << "Rut no existe en BD\n";
+        cout << "Error: Rut no existe en BD\n";
     }
     else{
-        cout << "Persona encontrada\n";
-        cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << endl << endl; 
+        //cout << "Persona encontrada\n";
+        //cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << endl << endl; 
     }
 
     free(cstr);

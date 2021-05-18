@@ -193,3 +193,6 @@ CREATE TABLE Contagio (
     PRIMARY KEY (Contagio_ID),
     FOREIGN KEY (RUT_Con) REFERENCES Persona(RUT)
 );
+
+--se agrega autoincremento al id de los contagios. De esta manera no es necesario especificar un id al insertar contagio
+ALTER TABLE Contagio CHANGE Contagio_ID Contagio_ID int NOT NULL AUTO_INCREMENT 

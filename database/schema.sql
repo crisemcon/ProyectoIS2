@@ -95,7 +95,7 @@ INSERT INTO Alumno (RUT_Alu, Sala_Alu) VALUES ("31102861-8",1);
 INSERT INTO Alumno (RUT_Alu, Sala_Alu) VALUES ("31386431-6",2);
 INSERT INTO Alumno (RUT_Alu, Sala_Alu) VALUES ("31456164-3",0);
 INSERT INTO Alumno (RUT_Alu, Sala_Alu) VALUES ("32359130-K",2);
-INSERT INTO Alumno (RUT_Alu, Sala_Alu) VALUES ("33261987-K",2);
+INSERT INTO Alumno (RUT_Alu, Sala_Alu) VALUES ("33261987-K",3);
 
 	--apoderado deberia separarse
 	--en varias tablas para evitar repetir
@@ -164,7 +164,7 @@ CREATE TABLE Profesor (
     FOREIGN KEY (Sala_Pro) REFERENCES Sala(Sala_ID)
 );
 
-INSERT INTO Profesor (RUT_Pro, Sala_Pro) VALUES ("6465312-1",2);
+INSERT INTO Profesor (RUT_Pro, Sala_Pro) VALUES ("6465312-1",3);
 INSERT INTO Profesor (RUT_Pro, Sala_Pro) VALUES ("6829550-5",1);
 INSERT INTO Profesor (RUT_Pro, Sala_Pro) VALUES ("7201253-4",1);
 INSERT INTO Profesor (RUT_Pro, Sala_Pro) VALUES ("7597573-2",0);

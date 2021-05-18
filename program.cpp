@@ -183,10 +183,76 @@ int main(int argc, char const *argv[])
     //cout << tipoPersona << endl;
     
 
-    decretarEstadoColegio(tipoPersona, 1, con, res);
+    
 
+    /*
+    admin puede
+        decretar estado colegio (0 safe 1 cuarentena)
+        recibir sugerencias (podria ser algo sencillo de +5 infectados = cuarentena / 1 infectado en sala = clausurar sala)
+        revisar alumnos y profesores de una sala junto a estado
+    profesor puede
+        ver alumnos de su curso y estado
+    alumno puede
+        ------
+    apoderado puede
+        informar contagio pupilo
+    persona (todos excepto alumno)
+        informar contagio propio
+    */
 
+    //este es el loop de menu
+    while(1){
+        if (tipoPersona == 0){
+            //si soy admin
+            cout << "Usted es administrador, tiene las siguientes opciones: \n";
+            cout << "1. Decretar estado colegio (cuarentena o no)\n";
+            cout << "2. Recibir sugerencias de accion\n";
+            cout << "3. Revisar alumnos y profesores por sala junto a su estado\n";
+            cout << "4. Salir del programa\n";
+            cout << "\nEscriba 1/2/3/4 y luego presione enter para elegir opcion: \n";
+            int opcion;
+            cin >> opcion;
+            if (opcion == 1){
+                cout << "\n\nDecretar estado colegio\n";
+                cout << "Escriba 0 o 1 para decretar estado actual de colegio (0 = normal, 1 = cuarentena)\n";
+                cin >> opcion;
+                decretarEstadoColegio(tipoPersona, opcion, con, res);
+            }
+            else if (opcion == 2){
+                //aca va el caso de uso UC3
+            }
+            else if (opcion == 3){
+                //aca va el caso de uso UC6
+            }
+            else if (opcion == 4){
+                cout << "Saliendo del programa...\n;"
+                break;
+            }
+            else{
+                cout << "Opcion no reconocida\n";
+                continue;
+            }
+        }
+        if (tipoPersona == 1){
+            //si soy profe
+            
+        }
+        if (tipoPersona == 2){
+            //si soy alumno
 
+        }
+        if (tipoPersona == 3){
+            //si soy apoderado
+
+        }
+        if (tipoPersona == -1){
+            cout << "Tipo de persona no reconocido, cerrando programa...\n";
+            break;
+        }
+
+    }
+
+    
     // close database connection
     mysql_close(con);
     return 0;

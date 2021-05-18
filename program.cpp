@@ -133,7 +133,7 @@ string getRutPupiloDeApoderado(string rutApo, MYSQL *connection, MYSQL_RES *res)
         return rutPup;
 }
 
-void informarContagioPropio(string rut,string fechaContagio, MYSQL *connection){
+void informarContagioRut(string rut,string fechaContagio, MYSQL *connection){
     /*
         Dado el rut de una Persona y la fecha de contagio, insertar en tabla de contagio
     */
@@ -150,7 +150,7 @@ void informarContagioPropio(string rut,string fechaContagio, MYSQL *connection){
     if (res) {
         cout << "Error al informar contagio" << endl;
     } else {
-        cout << "Su contagio ha sido informado correctamente" << endl;
+        cout << "El contagio ha sido informado correctamente" << endl;
     }
     // clean up the string
     free(cstr);
@@ -309,7 +309,7 @@ int main(int argc, char const *argv[])
                 string fechaContagio;
                 cout << "Ingrese la fecha del contagio en el formato: YYYY-MM-DD" << endl;
                 cin >> fechaContagio;
-                informarContagioPropio(rut, fechaContagio, con);
+                informarContagioRut(rut, fechaContagio, con);
             }
             else if (opcion == 5){
                 cout << "Saliendo del programa...\n;";
@@ -333,7 +333,7 @@ int main(int argc, char const *argv[])
                 string fechaContagio;
                 cout << "Ingrese la fecha del contagio en el formato: YYYY-MM-DD" << endl;
                 cin >> fechaContagio;
-                informarContagioPropio(rut, fechaContagio, con);
+                informarContagioRut(rut, fechaContagio, con);
             }
             else if (opcion == 2){
                 cout << "Saliendo del programa...;" << endl;
@@ -363,13 +363,17 @@ int main(int argc, char const *argv[])
             }
             else if (opcion == 2){
                 //aca va el caso de uso UC1
+                string fechaContagio;
+                cout << "Ingrese la fecha del contagio de su pupilo en el formato: YYYY-MM-DD" << endl;
+                cin >> fechaContagio;
+                informarContagioRut(getRutPupiloDeApoderado(rut, con, res), fechaContagio, con);
             }
             else if (opcion == 3){
                 //aca va el caso de uso UC2
                 string fechaContagio;
                 cout << "Ingrese la fecha del contagio en el formato: YYYY-MM-DD" << endl;
                 cin >> fechaContagio;
-                informarContagioPropio(rut, fechaContagio, con);
+                informarContagioRut(rut, fechaContagio, con);
             }
             else if (opcion == 4){
                 cout << "Saliendo del programa...;" << endl;

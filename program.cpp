@@ -79,6 +79,85 @@ int consultarTipoPersona(string rut, MYSQL *connection, MYSQL_RES *res){
     return resultado;
 }
 
+void consultarDatosPersona(string rut, MYSQL *connection, MYSQL_RES *res){
+    /*
+    Dado el rut de una persona retorna sus datos: rut, nombres, apellidos, correo, telefono y direccion
+    */
+    MYSQL_ROW row;
+    char * cstr;  
+    string consultaSQL;
+
+    consultaSQL = "select * from Persona where RUT = '" + rut + "';";
+    cstr = new char[consultaSQL.length() + 1];
+    strcpy(cstr, consultaSQL.c_str());
+
+    res = mysql_perform_query(connection, cstr);
+
+    if ((row = mysql_fetch_row(res)) == NULL){
+            //err
+        }
+        else{
+            cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << " | " << row[5] << endl;
+            //cout << row[0] << endl; 
+        }
+        // clean up the database result
+        free(cstr);
+        mysql_free_result(res);
+}
+
+string getRutPupiloDeApoderado(string rutApo, MYSQL *connection, MYSQL_RES *res){
+    /*
+        Dado el rut de un apoderado, obtener el rut de su pupilo
+    */
+    MYSQL_ROW row;
+    char * cstr;  
+    string consultaSQL;
+    string rutPup;
+
+    consultaSQL = "SELECT RUT_Pup from Apoderado WHERE RUT_Apo = '" + rutApo + "';";
+    cstr = new char[consultaSQL.length() + 1];
+    strcpy(cstr, consultaSQL.c_str());
+
+    res = mysql_perform_query(connection, cstr);
+
+    if ((row = mysql_fetch_row(res)) == NULL){
+            //err
+        }
+        else{
+            rutPup = row[0];
+            //cout << row[0] << endl; 
+        }
+        // clean up the database result
+        free(cstr);
+        mysql_free_result(res);
+        return rutPup;
+}
+
+void informarContagioPropio(string rut,string fechaContagio, MYSQL *connection){
+    /*
+        Dado el rut de una Persona y la fecha de contagio, insertar en tabla de contagio
+    */
+    MYSQL_ROW row;
+    char * cstr;  
+    string consultaSQL;
+    int res;
+
+    consultaSQL = "INSERT INTO Contagio (RUT_Con, Fecha) VALUES ('" + rut + "','" + fechaContagio + "');";
+    cstr = new char[consultaSQL.length() + 1];
+    strcpy(cstr, consultaSQL.c_str());
+
+    res = mysql_query(connection, cstr);
+    if (res) {
+        cout << "Error al informar contagio" << endl;
+    } else {
+        cout << "Su contagio ha sido informado correctamente" << endl;
+    }
+    // clean up the string
+    free(cstr);
+
+    return;
+}
+
 
 int decretarEstadoColegio(int nivel, int estado, MYSQL *connection, MYSQL_RES *res){
     /*
@@ -243,10 +322,38 @@ int main(int argc, char const *argv[])
         }
         if (tipoPersona == 3){
             //si soy apoderado
-
+            cout << "Usted es Apoderado, tiene las siguientes opciones: " << endl;
+            cout << "1. Ver datos de su pupilo" << endl;
+            cout << "2. Informar contagio de su pupilo" << endl;
+            cout << "3. Informar contagio de usted" << endl;
+            cout << "4. Salir del programa" << endl;
+            cout << "Escriba 1/2/3/4 y luego presione enter para elegir opcion: " << endl;
+            int opcion;
+            cin >> opcion;
+            if (opcion == 1){
+                consultarDatosPersona(getRutPupiloDeApoderado(rut, con, res), con, res);
+            }
+            else if (opcion == 2){
+                //aca va el caso de uso UC1
+            }
+            else if (opcion == 3){
+                //aca va el caso de uso UC2
+                string fechaContagio;
+                cout << "Ingrese la fecha del contagio en el formato: YYYY-MM-DD" << endl;
+                cin >> fechaContagio;
+                informarContagioPropio(rut, fechaContagio, con);
+            }
+            else if (opcion == 4){
+                cout << "Saliendo del programa...;" << endl;
+                break;
+            }
+            else{
+                cout << "Opcion no reconocida" << endl;
+                continue;
+            }
         }
         if (tipoPersona == -1){
-            cout << "Tipo de persona no reconocido, cerrando programa...\n";
+            cout << "Tipo de persona no reconocido, cerrando programa..." << endl;
             break;
         }
 

@@ -82,6 +82,9 @@ int consultarTipoPersona(string rut, MYSQL *connection, MYSQL_RES *res){
 
 int decretarEstadoColegio(int nivel, int estado, MYSQL *connection, MYSQL_RES *res){
     /*
+    nivel es tu nivel de usuario
+    estado es el estado_colegio, para saber si esta en cuarentena o no
+
     Retorna
         0 error
         1 exitoso
@@ -99,7 +102,7 @@ int decretarEstadoColegio(int nivel, int estado, MYSQL *connection, MYSQL_RES *r
     consultaSQL = "update Colegio set Estado_Colegio = " + to_string(estado) + " where ID_Colegio = 0;";
     //cout << consultaSQL << endl;  
     
-    cerr << "1\n";
+    //cerr << "1\n";
     cstr = new char[consultaSQL.length() + 1];
     strcpy(cstr, consultaSQL.c_str());
 

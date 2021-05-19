@@ -1,6 +1,6 @@
 // g++ main.cpp -o output -L/usr/include/mariadb/mysql -lmariadbclient
 #include <iostream>
-#include <mysql/mysql.h> // /usr/includes/mariadb/mysql.h
+#include <mysql.h> // /usr/includes/mariadb/mysql.h
 #include <string>
 #include <cstring>
 #include <vector>
@@ -334,12 +334,21 @@ int revisionCasos(MYSQL *con,string run){
     int infectados = 0; //almaceno la cantidad de infecciones totales de los infectados actuales no vistos previamente.
 
     consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,Alumno AS q1, Persona as p1 WHERE p1.RUT = q1.RUT_Alu AND q1.RUT_Alu = Contagio.RUT_Con AND revisada = FALSE";
+    
+
+
     cstr2 = new char[consultaSQL2.length() + 1];
     //Esta es la consulta para ver a los alumnos que esten contagiados
     //cout<<consultaSQL2<<endl;
     bool hayContagios = false; //Para verificar cuando existan almenos un contagiado
     strcpy(cstr2, consultaSQL2.c_str());
+
+
+    cerr << "Error revCasos" << endl;
     res = mysql_perform_query(con, cstr2);
+    cerr << "Error revCasos" << endl;
+
+
     int num_filas = mysql_num_fields(res);
 
     cout<<"Alumnos Contagiados: "<<endl;
@@ -437,7 +446,7 @@ int main(int argc, char const *argv[])
     struct connection_details mysqlD;
     mysqlD.server = "localhost";  // where the mysql database is
     mysqlD.user = "root"; // user
-    mysqlD.password = "LOTOsan23"; // the password for the database
+    mysqlD.password = "password"; // the password for the database
     mysqlD.database = "ProyectoIS2";	// the databse
 
 
@@ -515,6 +524,7 @@ int main(int argc, char const *argv[])
             string seleccion;
 
             if(!checkInicial){
+                bool hayQueLimpiar = true;
                 MYSQL_RES *resA;
                 cout << "Buenas Administrador." << endl << "Buscando por alertas pendientes:"<< endl;
                 string consultaAlerta ="Select alerta from Administrador where RUT_Adm = '" + rut + "';";
@@ -522,16 +532,29 @@ int main(int argc, char const *argv[])
                 strcpy(cstr, consultaAlerta.c_str());
                 resA= mysql_perform_query(con, cstr);
                 row = mysql_fetch_row(resA);
+
+                
+
                 if (((int)row[0][0]-(int)'0') > 0 ){
                     cout<<"Estimado/a, existen situaciones que requieren su atencion. Desea revisarlos?"<<endl;
                     cout<<"Si/No"<<endl;
                     cin>>seleccion; 
                     if(comparacionLowerCase(seleccion,"Si")){
-                        
+                        free(cstr);
+                        // clean up the database result
+                        mysql_free_result(resA);
                         consejoAccion(revisionCasos(con,rut));
+                        hayQueLimpiar = false;
                         //UC3
                         //TO DO Funcion que visualiza las infecciones.
                     }
+
+                }
+
+                if (hayQueLimpiar == true){
+                    free(cstr);
+                    // clean up the database result
+                    mysql_free_result(resA);
                 }
             }
             else if(checkInicial){
@@ -555,7 +578,8 @@ int main(int argc, char const *argv[])
                 decretarEstadoColegio(tipoPersona, opcion, con, res);
             }
             else if (opcion == 2){
-                checkInicial=false;//aca va el caso de uso UC3
+                //checkInicial=false;//aca va el caso de uso UC3
+                consejoAccion(revisionCasos(con,rut));
             }
             else if (opcion == 3){
                 

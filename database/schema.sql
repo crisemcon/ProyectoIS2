@@ -196,3 +196,15 @@ CREATE TABLE Contagio (
 
 --se agrega autoincremento al id de los contagios. De esta manera no es necesario especificar un id al insertar contagio
 ALTER TABLE Contagio CHANGE Contagio_ID Contagio_ID int NOT NULL AUTO_INCREMENT 
+
+
+
+
+ALTER TABLE `Contagio` ADD `revisada` BOOLEAN NOT NULL DEFAULT FALSE AFTER `Fecha`;
+
+ALTER TABLE `Administrador` ADD `alerta` INTEGER NOT NULL DEFAULT 0 AFTER `RUT_Adm`;
+
+DELIMITER $$
+CREATE TRIGGER `avisoAdm` AFTER INSERT ON `Contagio` FOR EACH ROW UPDATE Administrador SET alerta = alerta + 1
+$$
+DELIMITER ;

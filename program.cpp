@@ -310,6 +310,36 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
     return 0;
 }
 
+bool icompare_pred(unsigned char a, unsigned char b){
+    return std::tolower(a) == std::tolower(b);
+}
+
+bool comparacionLowerCase(string a,string b){
+    if (a.length()==b.length()) {
+        return std::equal(b.begin(), b.end(),
+                           a.begin(), icompare_pred);
+    }
+    else {
+        return false;
+    }
+}
+
+
+void revisionCasos(MYSQL *con,string run){
+    MYSQL_RES *res; // the results
+    MYSQL_ROW row;  // the results rows (array)
+
+    string consultaRut;
+    consultaRut = "select * from Contagio where revisada = true;";
+    char * cstr;    
+    cstr = new char[consultaRut.length() + 1];
+
+    strcpy(cstr, consultaRut.c_str());
+    res = mysql_perform_query(con, cstr);
+
+}
+
+
 int main(int argc, char const *argv[])
 {
     MYSQL *con;	// the connection
@@ -390,7 +420,32 @@ int main(int argc, char const *argv[])
     while(1){
         if (tipoPersona == 0){
             //si soy admin
-            cout << "Usted es administrador, tiene las siguientes opciones: \n";
+            //esta seccion se encarga de mostrar "notificaciones" pendientes
+            //que debe revisar el admin
+
+            string seleccion;
+            cout << "Buenas Administrador." << endl << "Buscando por alertas pendientes:"<< endl;
+            string consultaAlerta ="Select alerta from Administrador where RUT_Adm = '" + rut + "';";
+            cstr = new char[consultaAlerta.length() + 1];
+            strcpy(cstr, consultaAlerta.c_str());
+            MYSQL_RES *resA;
+            resA= mysql_perform_query(con, cstr);
+            row = mysql_fetch_row(resA);
+            if (((int)row[0][0]-(int)'0') > 0 ){
+                cout<<"Estimado/a, existen situaciones que requieren su atencion. Desea revisarlos?"<<endl;
+                cout<<"Si/No"<<endl;
+                cin>>seleccion; 
+                if(comparacionLowerCase(seleccion,"Si")){
+                    revisionCasos(con,rut);
+                    //UC3
+                    //TO DO Funcion que visualiza las infecciones.
+                }
+            }
+
+            free(cstr);
+            mysql_free_result(resA);
+
+            //cout << "Usted es administrador, tiene las siguientes opciones: \n";
             cout << "1. Decretar estado colegio (cuarentena o no)\n";
             cout << "2. Recibir sugerencias de accion\n";
             cout << "3. Revisar alumnos y profesores por sala junto a su estado\n";
@@ -456,12 +511,36 @@ int main(int argc, char const *argv[])
             }
         }
         if (tipoPersona == 2){
+            int seleccionN;
             //si soy alumno
-
+            //estos casos de uso se consideraran para la siguiente iteracion
+            //aun no se implementan
+            cout<<"Usted es alumno. NO puede hacer NADA\n";
+            cout<<"Seleccione una accion:"<<endl;
+            //cout<<"1.- Listar compañeros de sala."<<endl;
+            //cout<<"2.- Estado de mi sala"<<endl;
+            cout<<"3.- Salir"<<endl;
+            cin>>seleccionN;
+            if( seleccionN == 1 ){
+                //Inserte funcion
+            }
+            else if( seleccionN == 2 ){
+                //Inserte Funcion
+            }
+            else if( seleccionN == 3 ){
+                cout<<"Terminando"<<endl;
+                //free(cstr);
+                //mysql_free_result(resA);
+                break;
+            }
+            else{
+                cout<<"Por favor seleccione una opcion de la lista."<<endl;
+                cin>>seleccionN;
+            }
         }
         if (tipoPersona == 3){
             //si soy apoderado
-            cout << "Usted es Apoderado, tiene las siguientes opciones: " << endl;
+            cout<<"Buenas Sr/Sra"<<endl<<"Seleccione una opcion:"<<endl;
             cout << "1. Ver datos de su pupilo" << endl;
             cout << "2. Informar contagio de su pupilo" << endl;
             cout << "3. Informar contagio de usted" << endl;

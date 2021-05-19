@@ -203,6 +203,113 @@ int decretarEstadoColegio(int nivel, int estado, MYSQL *connection, MYSQL_RES *r
     return 1;
 }
 
+int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
+    //Comprobación para los Profesores
+    if (nivel != 1){
+        cout << "Error: Usted no es Profesor. No tiene Alumnos que revisar. " << endl;
+        return 0;
+    }
+    //Esta es la consulta para ver la lista completa de estudiantes
+    string consultaSQL1;
+    consultaSQL1 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND  Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + rut + "'";
+    //cout<<consultaSQL1<<endl;
+    char *cstr;
+    cstr = new char[consultaSQL1.length() + 1];
+    strcpy(cstr, consultaSQL1.c_str());
+    res = mysql_perform_query(connection, cstr);
+    
+    MYSQL_ROW row;
+    int num_filas;
+    num_filas = mysql_num_fields(res);
+
+    cout<<"Sus estudiantes son: "<<endl;
+    while ((row = mysql_fetch_row(res)))
+    {
+       unsigned long *largo;
+       largo = mysql_fetch_lengths(res);
+       //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
+       for(int i = 0; i < num_filas; i++)
+       {
+            //cout<<row[i];
+            printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
+       }
+       printf("\n");
+    }
+    free(cstr);
+    printf("\n");
+
+    char *cstr2;
+    string consultaSQL2;
+    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con";
+    cstr2 = new char[consultaSQL2.length() + 1];
+    //Esta es la consulta para ver a los alumnos que esten contagiados
+    //cout<<consultaSQL2<<endl;
+    bool hayContagios = false; //Para verificar cuando existan almenos un contagiado
+    strcpy(cstr2, consultaSQL2.c_str());
+    res = mysql_perform_query(connection, cstr2);
+    num_filas = mysql_num_fields(res);
+
+    cout<<"Estan Contagiados: "<<endl;
+    while ((row = mysql_fetch_row(res)))
+    {
+        hayContagios = true;
+        unsigned long *largo;
+        largo = mysql_fetch_lengths(res);
+        //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
+        for(int i = 0; i < num_filas; i++)
+        {
+            //cout<<row[i];
+            printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
+       }
+       printf("\n");
+    } 
+    //cout<< row <<endl;
+    if (hayContagios == false)
+    {
+        cout<<"NO TIENE ESTUDIANTES CONTAGIADOS"<<endl;
+    }
+    free(cstr2);
+    printf("\n");
+
+    char *cstr3;
+    string consultaSQL3;
+    string consultaSQL2Modif = "SELECT RUT_Alu FROM Contagio,(SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + rut + "')AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con";
+    consultaSQL3 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Profesor.RUT_Pro = '" + rut + "' AND Alumno.RUT_Alu NOT IN ( " + consultaSQL2Modif + ") AND Alumno.RUT_Alu = Persona.RUT ";
+    cstr3 = new char[consultaSQL3.length() + 1];
+    //Aqui esta consulta Sirve para ver los estudiantes Sanos, utiliza una variacion de la consulta anterior,
+    //por eso se usa consulta2Modif
+    //cout<<consultaSQL3<<endl;
+    bool haySanos = false; //Para verificar cuando existan almenos un alumno Sano
+    strcpy(cstr3, consultaSQL3.c_str());
+    res = mysql_perform_query(connection, cstr3);
+    num_filas = mysql_num_fields(res);
+    
+    cout<<"Sus estudiantes Sanos son: "<<endl;
+    while ((row = mysql_fetch_row(res)))
+    {
+        haySanos = true;
+        unsigned long *largo;
+        largo = mysql_fetch_lengths(res);
+        //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
+        for(int i = 0; i < num_filas; i++)
+        {
+            //cout<<row[i];
+            printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
+        }
+       printf("\n");
+    }  
+    if (haySanos == false)
+    {
+        cout<<"NO TIENE ESTUDIANTES SANOS"<<endl;
+    }
+    //cout<<"error1"<<endl;
+    free(cstr3);
+    //cout<<"error2"<<endl;
+    mysql_free_result(res);
+
+    return 0;
+}
+
 int main(int argc, char const *argv[])
 {
     MYSQL *con;	// the connection
@@ -324,8 +431,9 @@ int main(int argc, char const *argv[])
             //si soy profe
             cout << "Usted es Profesor, tiene las siguientes opciones: " << endl;
             cout << "1. Informar contagio de usted" << endl;
-            cout << "2. Salir del programa" << endl;
-            cout << "Escriba 1/2 y luego presione enter para elegir opcion: " << endl;
+            cout << "2. Ver estado de alumnos" << endl;
+            cout << "3. Salir del programa" << endl;
+            cout << "Escriba 1/2/3 y luego presione enter para elegir opcion: " << endl;
             int opcion;
             cin >> opcion;
             if(opcion == 1) {
@@ -336,6 +444,9 @@ int main(int argc, char const *argv[])
                 informarContagioRut(rut, fechaContagio, con);
             }
             else if (opcion == 2){
+                estadoAlumnos(tipoPersona, rut, con, res);
+            }
+            else if (opcion == 3){
                 cout << "Saliendo del programa...;" << endl;
                 break;
             }

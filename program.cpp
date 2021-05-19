@@ -441,7 +441,7 @@ int main(int argc, char const *argv[])
                     //TO DO Funcion que visualiza las infecciones.
                 }
             }
-
+                /////hola
             free(cstr);
             mysql_free_result(resA);
 

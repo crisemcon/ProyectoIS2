@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -95,14 +96,124 @@ void consultarDatosPersona(string rut, MYSQL *connection, MYSQL_RES *res){
 
     if ((row = mysql_fetch_row(res)) == NULL){
             //err
+    }
+    else{
+        cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << " | " << row[5] << endl;
+        //cout << row[0] << endl; 
+    }
+    cout<<endl;
+
+    // clean up the database result
+    free(cstr);
+    mysql_free_result(res);
+}
+
+void getDatosSala(MYSQL *connection, MYSQL_RES *res){
+    /*
+    Por cada una de las salas, retorna sus profesores, alumnos y su estado.
+    */
+    MYSQL_ROW row;
+    int num_cols;
+    char * cstr;  
+    string consultaSQL;
+    vector<pair<string, string>> salas;
+
+    consultaSQL = "SELECT Sala_ID,Nombre FROM Sala;";
+    cstr = new char[consultaSQL.length() + 1];
+    strcpy(cstr, consultaSQL.c_str());
+
+    res = mysql_perform_query(connection, cstr);
+
+    num_cols = mysql_num_fields(res);
+
+    cout<<"Las salas existentes son: "<<endl;
+
+    while ((row = mysql_fetch_row(res)))
+    {
+       unsigned long *largo;
+       largo = mysql_fetch_lengths(res);
+       //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
+       pair<string,string> p((string)row[0],(string)row[1]);
+       //cout<<p.first<<" "<<p.second<<endl;
+       salas.push_back(p);
+    }
+    free(cstr);
+    mysql_free_result(res);
+
+    for(int i=0; i<salas.size(); i++) {
+        //itera por cada sala, haciendo consultas por cada una de ellas
+        cout<<"Sala "<<salas[i].second<<":"<<endl;
+        bool contagio=false; //true si existe algún contagio en la sala
+        set<string> personas; //almacena todos los ruts de las personas de una sala (sirve para verificar si hay contagios)
+        //set porque hace la búsqueda más eficiente
+
+        //Profesores
+        string consultaSQLaux = "SELECT RUT_Pro FROM Profesor WHERE Sala_Pro = '"+salas[i].first+"'";
+        consultaSQL = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Pro = Persona.RUT;";
+        cstr = new char[consultaSQL.length() + 1];
+        strcpy(cstr, consultaSQL.c_str());
+
+        res = mysql_perform_query(connection, cstr);
+
+        cout<<"Profesores: "<<endl;
+        while ((row = mysql_fetch_row(res)))
+        {
+           unsigned long *largo;
+           largo = mysql_fetch_lengths(res);
+           //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
+           personas.insert(row[0]);
+           cout<<"  -["<<row[0]<<"] "<<row[1]<<" "<<row[2]<<endl;
         }
-        else{
-            cout << row[0] << " | " << row[1] << " | " << row[2] << " | " << row[3] << " | " << row[4] << " | " << row[5] << endl;
-            //cout << row[0] << endl; 
-        }
-        // clean up the database result
         free(cstr);
         mysql_free_result(res);
+
+        //Estudiantes
+        consultaSQLaux = "SELECT RUT_Alu FROM Alumno WHERE Sala_Alu = '"+salas[i].first+"'";
+        consultaSQL = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Alu = Persona.RUT;";
+        cstr = new char[consultaSQL.length() + 1];
+        strcpy(cstr, consultaSQL.c_str());
+
+        res = mysql_perform_query(connection, cstr);
+
+        cout<<"Alumnos: "<<endl;
+        while ((row = mysql_fetch_row(res)))
+        {
+           unsigned long *largo;
+           largo = mysql_fetch_lengths(res);
+           personas.insert(row[0]);
+           cout<<"  -["<<row[0]<<"] "<<row[1]<<" "<<row[2]<<endl;
+        }
+        free(cstr);
+        mysql_free_result(res);
+        
+        //ver si hay contagio
+        //se itera por Contagio primero, asumiendo que es la que tendrá menos cantidad de elementos que en Personas de la sala
+        consultaSQL = "SELECT RUT_Con FROM Contagio";
+        cstr = new char[consultaSQL.length() + 1];
+        strcpy(cstr, consultaSQL.c_str());
+
+        res = mysql_perform_query(connection, cstr);
+
+        while ((row = mysql_fetch_row(res)))
+        {
+            if(personas.count(row[0])==1) {
+                contagio=true;
+                break;
+            }
+        }
+        free(cstr);
+        mysql_free_result(res);
+        
+        if(contagio) cout<<"Estado: CONTAGIADA"<<endl;
+        else cout<<"Estado: SANA"<<endl;
+
+        printf("\n");
+    }
+
+    
+    printf("\n");
+
+    
 }
 
 string getRutPupiloDeApoderado(string rutApo, MYSQL *connection, MYSQL_RES *res){
@@ -121,16 +232,17 @@ string getRutPupiloDeApoderado(string rutApo, MYSQL *connection, MYSQL_RES *res)
     res = mysql_perform_query(connection, cstr);
 
     if ((row = mysql_fetch_row(res)) == NULL){
-            //err
-        }
-        else{
-            rutPup = row[0];
-            //cout << row[0] << endl; 
-        }
-        // clean up the database result
-        free(cstr);
-        mysql_free_result(res);
-        return rutPup;
+        //err
+    }
+    else{
+        rutPup = row[0];
+        //cout << row[0] << endl; 
+    }
+    // clean up the database result
+
+    free(cstr);
+    mysql_free_result(res);
+    return rutPup;
 }
 
 void informarContagioRut(string rut,string fechaContagio, MYSQL *connection){
@@ -155,6 +267,7 @@ void informarContagioRut(string rut,string fechaContagio, MYSQL *connection){
     // clean up the string
     free(cstr);
 
+    cout<<endl;
     return;
 }
 
@@ -198,6 +311,8 @@ int decretarEstadoColegio(int nivel, int estado, MYSQL *connection, MYSQL_RES *r
     // clean up the database result
     free(cstr);
     mysql_free_result(res);
+
+    cout<<endl;
     
     return 1;
 }
@@ -218,8 +333,8 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
     res = mysql_perform_query(connection, cstr);
     
     MYSQL_ROW row;
-    int num_filas;
-    num_filas = mysql_num_fields(res);
+    int num_cols;
+    num_cols = mysql_num_fields(res);
 
     cout<<"Sus estudiantes son: "<<endl;
     while ((row = mysql_fetch_row(res)))
@@ -227,7 +342,7 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
        unsigned long *largo;
        largo = mysql_fetch_lengths(res);
        //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
-       for(int i = 0; i < num_filas; i++)
+       for(int i = 0; i < num_cols; i++)
        {
             //cout<<row[i];
             printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
@@ -246,7 +361,7 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
     bool hayContagios = false; //Para verificar cuando existan almenos un contagiado
     strcpy(cstr2, consultaSQL2.c_str());
     res = mysql_perform_query(connection, cstr2);
-    num_filas = mysql_num_fields(res);
+    num_cols = mysql_num_fields(res);
 
     cout<<"Estan Contagiados: "<<endl;
     while ((row = mysql_fetch_row(res)))
@@ -255,7 +370,7 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
         unsigned long *largo;
         largo = mysql_fetch_lengths(res);
         //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
-        for(int i = 0; i < num_filas; i++)
+        for(int i = 0; i < num_cols; i++)
         {
             //cout<<row[i];
             printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
@@ -281,7 +396,7 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
     bool haySanos = false; //Para verificar cuando existan almenos un alumno Sano
     strcpy(cstr3, consultaSQL3.c_str());
     res = mysql_perform_query(connection, cstr3);
-    num_filas = mysql_num_fields(res);
+    num_cols = mysql_num_fields(res);
     
     cout<<"Sus estudiantes Sanos son: "<<endl;
     while ((row = mysql_fetch_row(res)))
@@ -290,17 +405,18 @@ int estadoAlumnos(int nivel, string rut, MYSQL *connection, MYSQL_RES *res){
         unsigned long *largo;
         largo = mysql_fetch_lengths(res);
         //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
-        for(int i = 0; i < num_filas; i++)
+        for(int i = 0; i < num_cols; i++)
         {
             //cout<<row[i];
             printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
         }
        printf("\n");
-    }  
+    } 
     if (haySanos == false)
     {
         cout<<"NO TIENE ESTUDIANTES SANOS"<<endl;
     }
+    cout<<endl;
     //cout<<"error1"<<endl;
     free(cstr3);
     //cout<<"error2"<<endl;
@@ -344,12 +460,9 @@ int revisionCasos(MYSQL *con,string run){
     strcpy(cstr2, consultaSQL2.c_str());
 
 
-    cerr << "Error revCasos" << endl;
     res = mysql_perform_query(con, cstr2);
-    cerr << "Error revCasos" << endl;
 
-
-    int num_filas = mysql_num_fields(res);
+    int num_cols = mysql_num_fields(res);
 
     cout<<"Alumnos Contagiados: "<<endl;
     while ((row = mysql_fetch_row(res)))
@@ -358,10 +471,10 @@ int revisionCasos(MYSQL *con,string run){
         unsigned long *largo;
         largo = mysql_fetch_lengths(res);
         //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
-        for(int i = 0; i < num_filas; i++)
+        for(int i = 0; i < num_cols; i++)
         {
             //cout<<row[i];
-            printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
+            printf("    [%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
             rutInfectados.push_back(row[1]);
             infectados++;
        }
@@ -375,17 +488,17 @@ int revisionCasos(MYSQL *con,string run){
     consultaSQL2 = "Select RUT, Nombres, Sala_Pro from Contagio as C, Persona as P, Profesor as PR where C.RUT_Con = P.RUT AND P.RUT = PR.RUT_Pro AND revisada = FALSE;";
     strcpy(cstr2, consultaSQL2.c_str());
     res = mysql_perform_query(con, cstr2);
-    num_filas = mysql_num_fields(res);
+    num_cols = mysql_num_fields(res);
     while ((row = mysql_fetch_row(res)))
     {
         hayContagios = true;
         unsigned long *largo;
         largo = mysql_fetch_lengths(res);
         //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
-        for(int i = 0; i < num_filas; i++)
+        for(int i = 0; i < num_cols; i++)
         {
             //cout<<row[i];
-            printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
+            printf("    [%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
             rutInfectados.push_back(row[1]);
             infectados++;
        }
@@ -398,17 +511,17 @@ int revisionCasos(MYSQL *con,string run){
     consultaSQL2 = "Select RUT, Nombres from Contagio as C, Persona as P, Apoderado as Ap where C.RUT_Con = P.RUT AND P.RUT = Ap.RUT_Apo AND revisada = FALSE;";
     strcpy(cstr2, consultaSQL2.c_str());
     res = mysql_perform_query(con, cstr2);
-    num_filas = mysql_num_fields(res);
+    num_cols = mysql_num_fields(res);
     while ((row = mysql_fetch_row(res)))
     {
         hayContagios = true;
         unsigned long *largo;
         largo = mysql_fetch_lengths(res);
         //cout<<*largo<<" = es el largo de la consultaSQL"<<endl;
-        for(int i = 0; i < num_filas; i++)
+        for(int i = 0; i < num_cols; i++)
         {
             //cout<<row[i];
-            printf("[%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
+            printf("    [%.*s] ", (int) largo[i], row[i] ? row[i] : "NULL");
             rutInfectados.push_back(row[1]);
             infectados++;
        }
@@ -417,6 +530,7 @@ int revisionCasos(MYSQL *con,string run){
     free(cstr2);
     mysql_free_result(res);
 
+    cout<<endl;
 
     //Consulta para contagios de Profesores: Select RUT, Nombres, Sala_Pro from Contagio as C, Persona as P, Profesor as PR where C.RUT_Con = P.RUT AND P.RUT = PR.RUT_Pro AND revisada = FALSE; 
     //Consulta para contagios de Apoderado: Select RUT, Nombres from Contagio as C, Persona as P, Apoderado as Ap where C.RUT_Con = P.RUT AND P.RUT = Ap.RUT_Apo AND revisada = FALSE;
@@ -433,6 +547,7 @@ void consejoAccion(int inf){
     else {
         cout<<"Recomendacion: Hacer una cuarentena del establecimiento completo."<<endl;
     }
+    cout<<endl;
     return;
 }
 
@@ -539,6 +654,7 @@ int main(int argc, char const *argv[])
                     cout<<"Estimado/a, existen situaciones que requieren su atencion. Desea revisarlos?"<<endl;
                     cout<<"Si/No"<<endl;
                     cin>>seleccion; 
+                    cout<<endl;
                     if(comparacionLowerCase(seleccion,"Si")){
                         free(cstr);
                         // clean up the database result
@@ -571,8 +687,9 @@ int main(int argc, char const *argv[])
             cout << "\nEscriba 1/2/3/4/5 y luego presione enter para elegir opcion: \n";
             int opcion;
             cin >> opcion;
+            cout<<endl;
             if (opcion == 1){
-                cout << "\n\nDecretar estado colegio\n";
+                cout << "Decretar estado colegio\n";
                 cout << "Escriba 0 o 1 para decretar estado actual de colegio (0 = normal, 1 = cuarentena)\n";
                 cin >> opcion;
                 decretarEstadoColegio(tipoPersona, opcion, con, res);
@@ -584,6 +701,7 @@ int main(int argc, char const *argv[])
             else if (opcion == 3){
                 
                 //aca va el caso de uso UC6
+                getDatosSala(con,res);
             }
             else if (opcion == 4) {
                 //aca va el caso de uso UC2
@@ -593,7 +711,7 @@ int main(int argc, char const *argv[])
                 informarContagioRut(rut, fechaContagio, con);
             }
             else if (opcion == 5){
-                cout << "Saliendo del programa...\n;";
+                cout << "Saliendo del programa...\n";
                 break;
             }
             else{
@@ -610,6 +728,7 @@ int main(int argc, char const *argv[])
             cout << "Escriba 1/2/3 y luego presione enter para elegir opcion: " << endl;
             int opcion;
             cin >> opcion;
+            cout<<endl;
             if(opcion == 1) {
                 //aca va el caso de uso UC2
                 string fechaContagio;
@@ -621,7 +740,7 @@ int main(int argc, char const *argv[])
                 estadoAlumnos(tipoPersona, rut, con, res);
             }
             else if (opcion == 3){
-                cout << "Saliendo del programa...;" << endl;
+                cout << "Saliendo del programa..." << endl;
                 break;
             }
             else {
@@ -640,6 +759,7 @@ int main(int argc, char const *argv[])
             //cout<<"2.- Estado de mi sala"<<endl;
             cout<<"3.- Salir"<<endl;
             cin>>seleccionN;
+            cout<<endl;
             if( seleccionN == 1 ){
                 //Inserte funcion
             }
@@ -647,7 +767,7 @@ int main(int argc, char const *argv[])
                 //Inserte Funcion
             }
             else if( seleccionN == 3 ){
-                cout<<"Terminando"<<endl;
+                cout << "Saliendo del programa...\n";
                 //free(cstr);
                 //mysql_free_result(resA);
                 break;
@@ -667,7 +787,9 @@ int main(int argc, char const *argv[])
             cout << "Escriba 1/2/3/4 y luego presione enter para elegir opcion: " << endl;
             int opcion;
             cin >> opcion;
+            cout<<endl;
             if (opcion == 1){
+                cout<<"Datos Pupilo:"<<endl;
                 consultarDatosPersona(getRutPupiloDeApoderado(rut, con, res), con, res);
             }
             else if (opcion == 2){
@@ -685,7 +807,7 @@ int main(int argc, char const *argv[])
                 informarContagioRut(rut, fechaContagio, con);
             }
             else if (opcion == 4){
-                cout << "Saliendo del programa...;" << endl;
+                cout << "Saliendo del programa..." << endl;
                 break;
             }
             else{

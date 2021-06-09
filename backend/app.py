@@ -1,8 +1,11 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+#app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/ProyectoIS2'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -27,13 +30,173 @@ class Persona(db.Model):
         self.Telefono = Telefono,
         self.Direccion = Direccion
 
+class Administrador(db.Model):
+    __tablename__ = "Administrador"
+    RUT_Adm = db.Column(db.String(10), db.ForeignKey(Persona.RUT), primary_key=True)
+    alerta = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, RUT_Adm, alerta):
+        self.RUT_Adm = RUT_Adm,
+        self.alerta = alerta
+
+class Sala(db.Model):
+    __tablename__ = "Sala"
+    Sala_ID = db.Column(db.Integer, primary_key=True)
+    Nombre = db.Column(db.String(10), nullable=False)
+
+    def __init__(self, Sala_ID, Nombre):
+        self.Sala_ID = Sala_ID,
+        self.Nombre = Nombre
+
+class Alumno(db.Model):
+    __tablename__ = "Alumno"
+    RUT_Alu = db.Column(db.String(10), db.ForeignKey(Persona.RUT), primary_key=True)
+    Sala_Alu = db.Column(db.Integer, db.ForeignKey(Sala.Sala_ID), nullable=False)
+
+    def __init__(self, RUT_Alu, Sala_Alu):
+        self.RUT_Alu = RUT_Alu,
+        self.Sala_Alu = Sala_Alu
+
+class Apoderado(db.Model):
+    __tablename__ = "Apoderado"
+    RUT_Apo = db.Column(db.String(10), db.ForeignKey(Persona.RUT), primary_key=True)
+    RUT_Pup = db.Column(db.String(10), db.ForeignKey(Alumno.RUT_Alu), nullable=False)
+
+    def __init__(self, RUT_Apo, RUT_Pup):
+        self.RUT_Apo = RUT_Apo,
+        self.RUT_Pup = RUT_Pup
+
+class Profesor(db.Model):
+    __tablename__ = "Profesor"
+    RUT_Pro = db.Column(db.String(10), db.ForeignKey(Persona.RUT), primary_key=True)
+    Sala_Pro = db.Column(db.Integer, db.ForeignKey(Sala.Sala_ID), nullable=False)
+
+    def __init__(self, RUT_Pro, Sala_Pro):
+        self.RUT_Pro = RUT_Pro,
+        self.Sala_Pro = Sala_Pro
+
+class Colegio(db.Model):
+    __tablename__ = "Colegio"
+    ID_Colegio = db.Column(db.Integer, primary_key=True)
+    Estado_Colegio = db.Column(db.Integer, nullable=False)
+    Nombre_Colegio = db.Column(db.String(50), nullable=False)
+
+    def __init__(self, ID_Colegio, Estado_Colegio, Nombre_Colegio):
+        self.ID_Colegio = ID_Colegio,
+        self.Estado_Colegio = Estado_Colegio
+        self.Nombre_Colegio = Nombre_Colegio
+
+class Contagio(db.Model):
+    __tablename__ = "Contagio"
+    Contagio_ID = db.Column(db.Integer, primary_key=True)
+    RUT_Con = db.Column(db.String(10), db.ForeignKey(Persona.RUT))
+    Fecha = db.Column(db.Date, nullable=False)
+    revisada = db.Column(db.Boolean, nullable=False)
+
+    def __init__(self, Contagio_ID, RUT_Con, Fecha, revisada):
+        self.Contagio_ID = Contagio_ID,
+        self.RUT_Con = RUT_Con
+        self.Fecha = Fecha
+        self.revisada = revisada
+
+
 class PersonaSchema(ma.Schema):
     class Meta:
         fields = ('RUT', 'Nombres','Apellidos','Correo','Telefono','Direccion')
 
+class AdministradorSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT_Adm', 'alerta')
+
+class SalaSchema(ma.Schema):
+    class Meta:
+        fields = ('Sala_ID', 'Nombre')
+
+class AlumnoSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT_Alu', 'Sala_Alu')
+
+class ApoderadoSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT_Apo', 'RUT_Pup')
+
+class ProfesorSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT_Pro', 'Sala_Pro')
+
+class ColegioSchema(ma.Schema):
+    class Meta:
+        fields = ('ID_Colegio', 'Estado_Colegio', 'Nombre_Colegio')
+
+class ContagioSchema(ma.Schema):
+    class Meta:
+        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada')
+
+
+administrador_schema = AdministradorSchema()
+administradores_schema = AdministradorSchema(many=True)
+
 persona_schema = PersonaSchema()
 personas_schema = PersonaSchema(many=True)
 
+sala_schema = SalaSchema()
+salas_schema = SalaSchema(many=True)
+
+alumno_schema = AlumnoSchema()
+alumnos_schema = AlumnoSchema(many=True)
+
+apoderado_schema = ApoderadoSchema()
+apoderados_schema = ApoderadoSchema(many=True)
+
+profesor_schema = ProfesorSchema()
+profesores_schema = ProfesorSchema(many=True)
+
+colegio_schema = ColegioSchema()
+colegios_schema = ColegioSchema(many=True)
+
+contagio_schema = ContagioSchema()
+contagios_schema = ContagioSchema(many=True)
+
+@app.route('/login', methods = ['POST'])
+def login():
+    request_data = request.get_json()
+    print("/////////////////////////////////////")
+    print(request_data)
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    persona = Persona.query.get(RUT)
+    if(persona == None):
+        response = jsonify({"error": "No existe una persona con el RUT especificado"})
+        response.status_code = 404
+        return response
+    response = persona_schema.dump(persona)
+    
+    admin = Administrador.query.get(RUT)
+    if(admin != None):
+        response.update({"Rol":"Administrador"})
+        return jsonify(response)
+    alumno = Alumno.query.get(RUT)
+    if(alumno != None):
+        response.update({"Rol":"Alumno"})
+        return jsonify(response)
+    apoderado = Apoderado.query.get(RUT)
+    if(apoderado != None):
+        response.update({"Rol":"Apoderado"})
+        return jsonify(response)
+    profesor = Profesor.query.get(RUT)
+    if(profesor != None):
+        response.update({"Rol":"Profesor"})
+        return jsonify(response)
+    
+    err = jsonify({"error": "La persona no posee ningun rol en un Colegio"})
+    err.status_code = 404
+    return  err
+
+@app.route('/admin', methods = ['GET'])
+def get_admins():
+    all_admins = Administrador.query.all()
+    results = administradores_schema.dump(all_admins)
+    return jsonify(results)
 
 @app.route('/personas', methods = ['GET'])
 def get_personas():

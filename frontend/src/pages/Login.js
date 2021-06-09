@@ -10,9 +10,22 @@ import {
   TextField,
   Typography
 } from '@material-ui/core';
+import axiosClient from '../config/axios'
 
 const Login = () => {
   const navigate = useNavigate();
+
+  const login = async rut => {
+    try {
+      const response = await axiosClient.post('/login', {"RUT": rut})
+      console.log(response)
+    } catch (err) {
+      /*const alert = {
+        error: err.response.data.error
+      }*/
+      console.log(err)
+    }
+  }
 
   return (
     <>
@@ -39,8 +52,9 @@ const Login = () => {
               password: Yup.string().max(255).required('Password is required')
             })}*/
             onSubmit={(e) => {
-              console.log(e.rut);
-              navigate('/app/dashboard', { replace: true });
+              login(e.rut);
+              //console.log(e.rut);
+              //navigate('/app/dashboard', { replace: true });
             }}
           >
             {({

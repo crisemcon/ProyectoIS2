@@ -5,7 +5,6 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
-#app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/ProyectoIS2'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -13,6 +12,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
+
+### MODELOS
 class Persona(db.Model):
     __tablename__ = "Persona"
     RUT = db.Column(db.String(10), primary_key=True, nullable=False)
@@ -100,6 +101,7 @@ class Contagio(db.Model):
         self.revisada = revisada
 
 
+### ESQUEMAS
 class PersonaSchema(ma.Schema):
     class Meta:
         fields = ('RUT', 'Nombres','Apellidos','Correo','Telefono','Direccion')
@@ -157,6 +159,8 @@ colegios_schema = ColegioSchema(many=True)
 contagio_schema = ContagioSchema()
 contagios_schema = ContagioSchema(many=True)
 
+
+### RUTAS
 @app.route('/login', methods = ['POST'])
 def login():
     request_data = request.get_json()
@@ -309,6 +313,6 @@ def delete_persona(rut):
     return persona_schema.jsonify(persona)
 
 
-
+### START
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

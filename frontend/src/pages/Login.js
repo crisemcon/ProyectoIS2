@@ -1,31 +1,44 @@
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
+import { useState} from "react";
+//import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
+import { Formik } from "formik";
 import {
   Box,
   Button,
   Container,
-  Link,
   TextField,
-  Typography
-} from '@material-ui/core';
-import axiosClient from '../config/axios'
+  Typography,
+} from "@material-ui/core";
+import axiosClient from "../config/axios";
 
 const Login = () => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
-  const login = async rut => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [user, setUser] = useState(null);
+
+  const login = async (rut) => {
+    setIsLoading(true);
+    setStatus(null);
+    setUser(null);
     try {
-      const response = await axiosClient.post('/login', {"RUT": rut})
-      console.log(response)
+      const response = await axiosClient.post("/login", { RUT: rut });
+      setTimeout(() => {
+        setUser(response.data);
+        setIsLoading(false);
+        console.log(response);
+      }, 1000)
     } catch (err) {
       /*const alert = {
         error: err.response.data.error
       }*/
-      console.log(err)
+      setTimeout(() => {
+        setStatus(err.response.data.error);
+        setIsLoading(false);
+      }, 1000);
     }
-  }
+  };
 
   return (
     <>
@@ -34,17 +47,17 @@ const Login = () => {
       </Helmet>
       <Box
         sx={{
-          backgroundColor: 'background.default',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          justifyContent: 'center'
+          backgroundColor: "background.default",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          justifyContent: "center",
         }}
       >
         <Container maxWidth="sm">
           <Formik
             initialValues={{
-              rut: '',
+              rut: "",
               //password: 'Password123'
             }}
             /*validationSchema={Yup.object().shape({
@@ -62,23 +75,20 @@ const Login = () => {
               handleBlur,
               handleChange,
               handleSubmit,
-              isSubmitting,
+              //isLoading,
               touched,
-              values
+              values,
             }) => (
               <form onSubmit={handleSubmit}>
                 <Box sx={{ mb: 0 }}>
-                  <Typography
-                    color="textPrimary"
-                    variant="h2"
-                  >
+                  <Typography color="textPrimary" variant="h2">
                     Inicia Sesion
                   </Typography>
                 </Box>
                 <TextField
-                  //error={Boolean(touched.email && errors.email)}
+                  error={Boolean(status !== null)}
                   fullWidth
-                  //helperText={touched.email && errors.email}
+                  helperText={status}
                   label="RUT"
                   margin="normal"
                   name="rut"
@@ -91,7 +101,7 @@ const Login = () => {
                 <Box sx={{ py: 2 }}>
                   <Button
                     color="primary"
-                    disabled={isSubmitting}
+                    disabled={isLoading}
                     fullWidth
                     size="large"
                     type="submit"
@@ -103,6 +113,23 @@ const Login = () => {
               </form>
             )}
           </Formik>
+          {
+            user !== null ?
+            <> 
+            <Typography>
+              Rol: {user.Rol}
+            </Typography>
+            <Typography>
+              Nombres: {user.Nombres}
+            </Typography>
+            <Typography>
+              Apellidos: {user.Apellidos}
+            </Typography>
+            <Typography>
+              Correo: {user.Correo}
+            </Typography>
+            </> : null
+          }
         </Container>
       </Box>
     </>

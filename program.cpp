@@ -660,6 +660,7 @@ int main(int argc, char const *argv[])
                         // clean up the database result
                         mysql_free_result(resA);
                         consejoAccion(revisionCasos(con,rut));
+                        cout<<"error"<<endl;
                         hayQueLimpiar = false;
                         //UC3
                         //TO DO Funcion que visualiza las infecciones.

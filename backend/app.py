@@ -207,6 +207,7 @@ def get_personas():
     all_personas = Persona.query.all()
     results = personas_schema.dump(all_personas)
     return jsonify(results)
+    
 
 @app.route('/personas/<rut>', methods = ['GET'])
 def get_persona(rut):
@@ -311,6 +312,62 @@ def delete_persona(rut):
         response.status_code = 400
         return response
     return persona_schema.jsonify(persona)
+
+
+
+@app.route('/US4', methods = ['POST'])
+def confirmar_cuarentena():
+    #este caso de uso permite al administrador confirmar
+    #o no el establecimiento de cuarentena total en el
+    #establecimiento
+    request_data = request.get_json()
+    #Como request solicita el rut de la persona que hace el
+    #request, y luego un estado, que puede ser 0 o 1 para
+    #confirmar o no la decision tomada
+    
+    
+
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    if 'Estado' in request_data:
+        Estado = request_data['Estado']
+    else: 
+        response = jsonify({"error": "Se requiere el estado para cambiar el estado"})
+        response.status_code = 400
+        return response
+
+    print(RUT + " desea cambiar a estado: " + Estado)
+
+    #Esta es la logica real del codigo, donde crea una instancia
+    #local del colegio (colegio actual) con la PRIMARY KEY = 0
+    #ed, ID_Colegio = 0
+    #---
+    #Luego setea el attributo del colegio actual llamado estado colegio
+    #a "Estado"
+    colegioActual = Colegio.query.get(0)
+    setattr(colegioActual, 'Estado_Colegio', int(Estado))
+
+    #print(type(Estado))
+    #print(Estado)
+
+    #Hacemos commit a los cambios, EOC mostramos error
+    try:
+        db.session.commit()
+    except Exception as error:
+        response = jsonify({"error": str(error.orig)})
+        response.status_code = 400
+        return response
+
+    if(int(Estado) == 0):
+        return jsonify("Se ha levantado la cuarentena total establecida por el MINSAL")
+    else:
+        return jsonify("Cuarentena establecida por el MINSAL se ha confirmado")
+    
 
 
 ### START

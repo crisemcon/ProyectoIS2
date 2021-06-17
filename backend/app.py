@@ -317,6 +317,8 @@ def delete_persona(rut):
 
 @app.route('/US4', methods = ['POST'])
 def confirmar_cuarentena():
+    #Como administrador quiero confirmar cuarentena establecida por el SEREMI para seguir el decreto oficial del país.
+
     #este caso de uso permite al administrador confirmar
     #o no el establecimiento de cuarentena total en el
     #establecimiento
@@ -325,8 +327,6 @@ def confirmar_cuarentena():
     #request, y luego un estado, que puede ser 0 o 1 para
     #confirmar o no la decision tomada
     
-    
-
     if 'RUT' in request_data:
         RUT = request_data['RUT']
     else: 
@@ -368,6 +368,10 @@ def confirmar_cuarentena():
     else:
         return jsonify("Cuarentena establecida por el MINSAL se ha confirmado")
     
+
+
+#Como persona quiero informar contagio para que el establecimiento pueda realizar oportunamente la trazabilidad
+
 
 
 ### START

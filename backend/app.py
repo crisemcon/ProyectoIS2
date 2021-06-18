@@ -343,6 +343,14 @@ def confirmar_cuarentena():
 
     print(RUT + " desea cambiar a estado: " + Estado)
 
+    UserType = check_user_type(RUT)
+
+    if(UserType != 0): 
+        response = jsonify({"Error": "Usted no puede realizar esta accion"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
     #Esta es la logica real del codigo, donde crea una instancia
     #local del colegio (colegio actual) con la PRIMARY KEY = 0
     #ed, ID_Colegio = 0
@@ -370,7 +378,83 @@ def confirmar_cuarentena():
     
 
 
-#Como persona quiero informar contagio para que el establecimiento pueda realizar oportunamente la trazabilidad
+@app.route('/US2', methods = ['POST'])
+def informar_contagio():
+    #Como persona quiero informar contagio para que el establecimiento pueda realizar oportunamente la trazabilidad
+
+    request_data = request.get_json()
+    #Como request solicita el RUT de la persona y la FECHA del contagio
+
+    
+    #Ver si se ingreso el rut
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    if 'Fecha' in request_data:
+        FechaContagio = request_data['Fecha']
+    else: 
+        response = jsonify({"error": "Fecha requerido"})
+        response.status_code = 400
+        return response
+
+
+    UserType = check_user_type(RUT)
+
+    if(UserType == 2):
+        response = jsonify({"error": "Alumnos no pueden informar contagios"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
+    #falta cambiar el 5 por el auto-increasing 1
+    nuevoContagio = Contagio(5, RUT, FechaContagio, 0)
+
+    try:
+        db.session.add(nuevoContagio)
+        db.session.commit()
+    except Exception as error:
+        response = jsonify({"error": str(error.orig)})
+        response.status_code = 400
+        return response
+
+    return contagio_schema.jsonify(nuevoContagio)
+
+
+
+    
+def check_user_type(RUT):
+    #Dado un rut, encuentra y retorna el tipo de usuario
+    #0 admin
+    #1 profesor
+    #2 alumno
+    #3 apoderado
+
+    UserType = -1
+    FindUserType = Administrador.query.get(RUT)
+    if(FindUserType != None):
+        UserType = 0
+        print("Es admin " + str(UserType))
+
+    FindUserType = Profesor.query.get(RUT)
+    if(FindUserType != None):
+        UserType = 1
+        print("Es profesor " + str(UserType))
+
+    FindUserType = Alumno.query.get(RUT)
+    if(FindUserType != None):
+        UserType = 2
+        print("Es alumno " + str(UserType))
+
+    FindUserType = Apoderado.query.get(RUT)
+    if(FindUserType != None):
+        UserType = 3
+        print("Es apoderado " + str(UserType))
+
+    return UserType
 
 
 

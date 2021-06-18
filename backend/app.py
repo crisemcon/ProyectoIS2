@@ -329,6 +329,11 @@ def confirmar_cuarentena():
     #Como request solicita el rut de la persona que hace el
     #request, y luego un estado, que puede ser 0 o 1 para
     #confirmar o no la decision tomada
+
+    #{
+    #    "RUT": "12532639-0",
+    #    "Estado": "0
+    #}
     
     if 'RUT' in request_data:
         RUT = request_data['RUT']

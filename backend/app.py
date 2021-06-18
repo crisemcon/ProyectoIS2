@@ -84,20 +84,23 @@ class Colegio(db.Model):
 
     def __init__(self, ID_Colegio, Estado_Colegio, Nombre_Colegio):
         self.ID_Colegio = ID_Colegio,
-        self.Estado_Colegio = Estado_Colegio
+        self.Estado_Colegio = Estado_Colegio,
         self.Nombre_Colegio = Nombre_Colegio
 
 class Contagio(db.Model):
     __tablename__ = "Contagio"
-    Contagio_ID = db.Column(db.Integer, primary_key=True)
+    Contagio_ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     RUT_Con = db.Column(db.String(10), db.ForeignKey(Persona.RUT))
     Fecha = db.Column(db.Date, nullable=False)
     revisada = db.Column(db.Boolean, nullable=False)
-
-    def __init__(self, Contagio_ID, RUT_Con, Fecha, revisada):
-        self.Contagio_ID = Contagio_ID,
-        self.RUT_Con = RUT_Con
-        self.Fecha = Fecha
+    
+    #Fue necesario quitar esta parte para poder funcionar con el 
+    #auto increment de la BD
+    #def __init__(self, Contagio_ID, RUT_Con, Fecha, revisada):
+    def __init__(self, RUT_Con, Fecha, revisada):
+        #self.Contagio_ID = Contagio_ID,
+        self.RUT_Con = RUT_Con,
+        self.Fecha = Fecha,
         self.revisada = revisada
 
 
@@ -384,7 +387,10 @@ def informar_contagio():
 
     request_data = request.get_json()
     #Como request solicita el RUT de la persona y la FECHA del contagio
-
+    #{
+    #    "RUT": "12532639-0",
+    #    "Fecha": "2021-06-17"
+    #}  
     
     #Ver si se ingreso el rut
     if 'RUT' in request_data:
@@ -411,7 +417,7 @@ def informar_contagio():
         return response
 
     #falta cambiar el 5 por el auto-increasing 1
-    nuevoContagio = Contagio(5, RUT, FechaContagio, 0)
+    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0)
 
     try:
         db.session.add(nuevoContagio)

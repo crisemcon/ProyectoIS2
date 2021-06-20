@@ -1,28 +1,29 @@
 import { Navigate } from 'react-router-dom';
-// import DashboardLayout from 'src/components/DashboardLayout';
- import MainLayout from './components/MainLayout';
-// import Account from 'src/pages/Account';
-// import CustomerList from 'src/pages/CustomerList';
-// import Dashboard from 'src/pages/Dashboard';
- import Login from './pages/Login';
- import NotFound from './pages/NotFound';
-// import ProductList from 'src/pages/ProductList';
-// import Register from 'src/pages/Register';
-// import Settings from 'src/pages/Settings';
+import DashboardLayout from './components/DashboardLayout';
+import MainLayout from './components/MainLayout';
+import Account from './pages/Account';
+import ListaPersonas from './pages/ListaPersonas';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import NotFound from './pages/NotFound';
+import ProductList from './pages/ProductList';
+import Settings from './pages/Settings';
+import Salas from './pages/Salas';
 
 const routes = [
-  // {
-  //   path: 'app',
-  //   element: <DashboardLayout />,
-  //   children: [
-  //     { path: 'account', element: <Account /> },
-  //     { path: 'customers', element: <CustomerList /> },
-  //     { path: 'dashboard', element: <Dashboard /> },
-  //     { path: 'products', element: <ProductList /> },
-  //     { path: 'settings', element: <Settings /> },
-  //     { path: '*', element: <Navigate to="/404" /> }
-  //   ]
-  // },
+  {
+    path: 'app',
+    element: <DashboardLayout />,
+    children: [
+      { path: 'account', element: <Account /> },
+      { path: 'personas', element: <ListaPersonas /> },
+      { path: 'salas' , element: <Salas /> },
+      { path: 'dashboard', element: <Dashboard /> },
+      { path: 'products', element: <ProductList /> },
+      { path: 'settings', element: <Settings /> },
+      { path: '*', element: <Navigate to="/404" /> }
+    ]
+  },
   {
     path: '/',
     element: <MainLayout />,

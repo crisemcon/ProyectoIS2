@@ -1,5 +1,5 @@
 import { useEffect} from "react";
-//import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { Formik } from "formik";
 import {
@@ -14,33 +14,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { loginUser, userSelector, clearState } from '../redux/user';
 
 const Login = () => {
-  //const navigate = useNavigate();
-
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [status, setStatus] = useState(null);
-  // const [user, setUser] = useState(null);
-
-  // const login = async (rut) => {
-  //   setIsLoading(true);
-  //   setStatus(null);
-  //   setUser(null);
-  //   try {
-  //     const response = await axiosClient.post("/login", { RUT: rut });
-  //     setTimeout(() => {
-  //       setUser(response.data);
-  //       setIsLoading(false);
-  //       console.log(response);
-  //     }, 1000)
-  //   } catch (err) {
-  //     /*const alert = {
-  //       error: err.response.data.error
-  //     }*/
-  //     setTimeout(() => {
-  //       setStatus(err.response.data.error);
-  //       setIsLoading(false);
-  //     }, 1000);
-  //   }
-  // };
+  const navigate = useNavigate();
 
   const dispatch = useDispatch();
   const { isFetching, isSuccess, isError, errorMessage} = useSelector(
@@ -66,8 +40,7 @@ const Login = () => {
 
     if (isSuccess) {
       dispatch(clearState());
-      //console.log("SUCCESS", RUT, Nombres, Apellidos, Correo, Rol, Telefono )
-      //history.push('/');
+      navigate('/app/dashboard', { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isError, isSuccess]);
@@ -90,25 +63,15 @@ const Login = () => {
           <Formik
             initialValues={{
               RUT: "",
-              //password: 'Password123'
             }}
-            /*validationSchema={Yup.object().shape({
-              email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-              password: Yup.string().max(255).required('Password is required')
-            })}*/
             onSubmit={(e) => {
               onSubmit(e.RUT)
-              //console.log(e.rut);
-              //navigate('/app/dashboard', { replace: true });
             }}
           >
             {({
-              errors,
               handleBlur,
               handleChange,
               handleSubmit,
-              //isLoading,
-              touched,
               values,
             }) => (
               <form onSubmit={handleSubmit}>
@@ -126,7 +89,6 @@ const Login = () => {
                   name="RUT"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  //type="email"
                   value={values.RUT}
                   variant="outlined"
                 />
@@ -145,23 +107,6 @@ const Login = () => {
               </form>
             )}
           </Formik>
-          {/*
-            user !== null ?
-            <> 
-            <Typography>
-              Rol: {user.Rol}
-            </Typography>
-            <Typography>
-              Nombres: {user.Nombres}
-            </Typography>
-            <Typography>
-              Apellidos: {user.Apellidos}
-            </Typography>
-            <Typography>
-              Correo: {user.Correo}
-            </Typography>
-            </> : null
-          */}
         </Container>
       </Box>
     </>

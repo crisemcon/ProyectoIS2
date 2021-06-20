@@ -379,6 +379,9 @@ def confirmar_cuarentena():
         response.status_code = 400
         return response
 
+    #{
+    #   esto es lo que retorna, uno de estos 2 mensajes
+    #}
     if(int(Estado) == 0):
         return jsonify("Se ha levantado la cuarentena total establecida por el MINSAL")
     else:
@@ -434,7 +437,12 @@ def informar_contagio():
 
     return contagio_schema.jsonify(nuevoContagio)
 
-
+#{
+#    "Contagio_ID": 13,
+#    "Fecha": "2021-06-19",
+#    "RUT_Con": "12532639-0",
+#    "revisada": false
+#}
 
     
 def check_user_type(RUT):

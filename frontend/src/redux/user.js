@@ -7,32 +7,9 @@ export const loginUser = createAsyncThunk(
     try {
       const response = await axiosClient.post("/login", { RUT: RUT });
       let data = await response.data;
-      console.log("RESPONSEEEEE", response);
       if (response.status === 200) {
-          console.log("dafukk")
         localStorage.setItem("RUT", data.RUT);
         return data;
-      } else {
-          console.log("reject po culiao")
-        return thunkAPI.rejectWithValue(data);
-      }
-    } catch (e) {
-      console.log("Error ctmare", e.response.data);
-      return thunkAPI.rejectWithValue(e.response.data);
-    }
-  }
-);
-
-export const fetchUserByRUT = createAsyncThunk(
-  "users/fetchUserByRUT",
-  async ({ RUT }, thunkAPI) => {
-    try {
-      const response = await axiosClient.post("/login", { RUT: RUT });
-      let data = response.data;
-      console.log("data", data, response.status);
-
-      if (response.status === 200) {
-        return { ...data };
       } else {
         return thunkAPI.rejectWithValue(data);
       }
@@ -84,28 +61,12 @@ export const userSlice = createSlice({
     [loginUser.rejected]: (state, { payload }) => {
       state.isFetching = false;
       state.isError = true;
-      state.errorMessage = payload.error;
+      payload === undefined
+        ? (state.errorMessage = "Error al conectar con el servidor")
+        : (state.errorMessage = payload.error);
     },
     [loginUser.pending]: (state) => {
       state.isFetching = true;
-    },
-    [fetchUserByRUT.pending]: (state) => {
-      state.isFetching = true;
-    },
-    [fetchUserByRUT.fulfilled]: (state, { payload }) => {
-      state.isFetching = false;
-      state.isSuccess = true;
-
-      state.RUT = payload.RUT;
-      state.Nombres = payload.Nombres;
-      state.Apellidos = payload.Apellidos;
-      state.Correo = payload.Correo;
-      state.Rol = payload.Rol;
-      state.Telefono = payload.Telefono;
-    },
-    [fetchUserByRUT.rejected]: (state) => {
-      state.isFetching = false;
-      state.isError = true;
     },
   },
 });

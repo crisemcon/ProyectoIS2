@@ -19,7 +19,7 @@ import {
 const InformarContagioPupiloDialog = (props) => {
   return (
     <Dialog {...props} open={props.open} onClose={props.onClose}>
-      <DialogTitle>{"Seleccione su pupilo contagiado"}</DialogTitle>
+      <DialogTitle>{"Informar Contagio Pupilo"}</DialogTitle>
       <DialogContent>
         <Grid container spacing={1}>
           <Grid item>

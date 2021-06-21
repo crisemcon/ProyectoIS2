@@ -437,6 +437,7 @@ def informar_contagio():
 
     return contagio_schema.jsonify(nuevoContagio)
 
+#Esta ruta retorna
 #{
 #    "Contagio_ID": 13,
 #    "Fecha": "2021-06-19",
@@ -474,9 +475,6 @@ def recibir_sugerencias():
 
     #Obtener todos los contagiados
     currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con, Contagio.Contagio_ID)
-    
-    #print(type(currentContagiados))
-    #print(type(currentContagiados[0].RUT_Con))
 
     #Buscamos los ruts de todos los contagiados
     listaContagiados = []
@@ -485,23 +483,36 @@ def recibir_sugerencias():
 
     #Con la lista de contagiados podemos ver cuantas
     #personas infectadas tenemos en el colegio
-    for i in range(len(listaContagiados)):
-        print(listaContagiados[i])
+    #for i in range(len(listaContagiados)):
+    #    print(listaContagiados[i])
 
     #Ahora calculamos el tipo de user de cada uno
     listaTipoUser = []
     for i in range(len(listaContagiados)):
         listaTipoUser.append(check_user_type(listaContagiados[i]))
-        print(listaTipoUser[i])
+        #print(listaTipoUser[i])
 
     #Revisamos cuantos contagiados existen por sala
 
-    #Esto por ahora esta limitado a las 4 salas que tenemos
-    #en el programa, pero puede ser expandido despues
-    #haciendo una consulta para revisar cuantas salas hay y
-    #ver el nombre de cada sala
-    contagiosSala = [0, 0, 0, 0]
+    #query para obtener salas
+    currentSalas = Sala.query.with_entities(Sala.Sala_ID, Sala.Nombre)
+    
+    #Len salas tiene el largo de salas, se usa despues
+    #ContagiosSala = cantidad de contagios por sala
+    #NombresSala = nombres de cada sala
+    #IDsSala = ids de cada sala
+    lenSalas = 0
+    contagiosSala = []
+    nombresSala = []
+    idsSala = []
+    for salaAux in currentSalas:
+        lenSalas += 1
+        idsSala.append(salaAux.Sala_ID)
+        nombresSala.append(salaAux.Nombre)
+        contagiosSala.append(0)
 
+    #Revisamos la lista de contagiados y
+    #agregamos los contagios a la sala respectiva
     for i in range(len(listaContagiados)):
         #Revisar contagiado si es alumno
         if(listaTipoUser[i] == 2):
@@ -514,34 +525,78 @@ def recibir_sugerencias():
            contagiosSala[pr.Sala_Pro] += 1 
 
     for i in range(len(contagiosSala)):
-        print("Sala", i, "tiene", contagiosSala[i], "contagios")
+        print("Sala", nombresSala[i] , "tiene", contagiosSala[i], "contagios")
 
+    #Este es el pedazo de codigo que genera el return para el
+    #frontend
+    dictReturn = {"ContagiadosTotal": sum(contagiosSala)}
+    listaContagios = {}
+    for i in range(lenSalas):
+        if(contagiosSala[i] == 0):
+            sugerencia = "Continuar procedimientos usuales"
+        elif(contagiosSala[i]==1):
+            sugerencia = "Considerar cerrar la sala temporalmente"
+        else:
+            sugerencia = "Cerrar sala temporalmente"
+        listaContagios["Sala " + nombresSala[i]] = {"Contagiados":contagiosSala[i],"Sugerencia":sugerencia}
 
+    dictReturn["ContagiadosSalas"] = listaContagios
+    if(sum(contagiosSala) == 0):
+        sugGlobal = "Continuar funcionamiento normal"
+    elif(sum(contagiosSala) <= 5):
+        sugGlobal = "Considerar cierre temporal del establecimiento"
+    else:
+        sugGlobal = "Es necesario solicitar cierre temporal del establecimiento"
+    dictReturn["Sugerencia"] = sugGlobal
 
-    #NECESITO # DE CONTAGIADOS POR SALA
-    #SUGERENCIA POR SALA
-    #SUGERENCIA GLOBAL
+    return jsonify(dictReturn)
+
+@app.route('/contpend', methods = ['GET'])
+def notificaciones_admin():
+    #Retorna los contagios que no han sido revisados
+    request_data = request.get_json()
+
+    #{
+    #    "RUT": "12532639-0",
+    #}
     
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
 
-    return jsonify(message="test")
+    UserType = check_user_type(RUT)
 
-"""
-    #Revisamos alummos de la sala 0
-    students = Alumno.query.filter(Alumno.Sala_Alu == 0)
+    if(UserType != 0): 
+        response = jsonify({"Error": "Usted no puede realizar esta accion"})
+        #Forbidden
+        response.status_code = 403
+        return response
 
-    print(type(students))
 
-    for student in students:
-        print(student)
+    #Obtener todos los contagiados a revisar
+    contagiadosRevisar = Contagio.query.filter_by(revisada = 0).all()
 
-    #Revisamos profes de la sala 0
-    profes = Profesor.query.filter(Profesor.Sala_Pro == 0)
+    if(len(contagiadosRevisar) == 0):
+        print("No hay ninguno a revisar")
+        return jsonify(message="No hay nuevas notificaciones")
 
-    print(type(profes))
+    for cont in contagiadosRevisar:
+        print("asd")
+        cont.revisada = 1
+    
+    try:
+        db.session.commit()
+    except Exception as error:
+        response = jsonify({"error": str(error.orig)})
+        response.status_code = 400
+        return response
 
-    for profe in profes:
-        print(profe)
-"""
+    results = contagios_schema.dump(contagiadosRevisar)
+    return jsonify(results)
+
 
 
 def check_user_type(RUT):

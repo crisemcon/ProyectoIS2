@@ -383,9 +383,9 @@ def confirmar_cuarentena():
     #   esto es lo que retorna, uno de estos 2 mensajes
     #}
     if(int(Estado) == 0):
-        return jsonify("Se ha levantado la cuarentena total establecida por el MINSAL")
+        return jsonify(message="Se ha levantado la cuarentena total establecida por el MINSAL")
     else:
-        return jsonify("Cuarentena establecida por el MINSAL se ha confirmado")
+        return jsonify(message="Cuarentena establecida por el MINSAL se ha confirmado")
     
 
 
@@ -473,7 +473,7 @@ def recibir_sugerencias():
         return response
 
     #Obtener todos los contagiados
-    currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con)
+    currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con, Contagio.Contagio_ID)
     
     #print(type(currentContagiados))
     #print(type(currentContagiados[0].RUT_Con))
@@ -501,20 +501,29 @@ def recibir_sugerencias():
     #haciendo una consulta para revisar cuantas salas hay y
     #ver el nombre de cada sala
     contagiosSala = [0, 0, 0, 0]
-    #for i in range(len(listaContagiados)):
 
-    #Revisar contagiado si es alumno
-    if(listaTipoUser[i] == 2):
-        al = Alumno.query.filter_by(Sala_Alu = 0)
-    #Revisar contagiado si es profe
-    if(listaTipoUser[i] == 1):
-       pr = Profesor.query.filter_by(Sala_Pro = 0)
+    for i in range(len(listaContagiados)):
+        #Revisar contagiado si es alumno
+        if(listaTipoUser[i] == 2):
+            al = Alumno.query.get(listaContagiados[i])
+            contagiosSala[al.Sala_Alu] += 1 
+
+        #Revisar contagiado si es profe
+        if(listaTipoUser[i] == 1):
+           pr = Profesor.query.get(listaContagiados[i])
+           contagiosSala[pr.Sala_Pro] += 1 
+
+    for i in range(len(contagiosSala)):
+        print("Sala", i, "tiene", contagiosSala[i], "contagios")
+
+
 
     #NECESITO # DE CONTAGIADOS POR SALA
     #SUGERENCIA POR SALA
     #SUGERENCIA GLOBAL
     
-    return jsonify("Test")
+
+    return jsonify(message="test")
 
 """
     #Revisamos alummos de la sala 0

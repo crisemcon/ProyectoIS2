@@ -444,7 +444,97 @@ def informar_contagio():
 #    "revisada": false
 #}
 
+   
+
+@app.route('/US3', methods = ['GET'])
+def recibir_sugerencias():
+    #Como administrador deseo recibir sugerencias sobre la acción a tomar 
+    #para actuar de forma adecuada y correcta con el objetivo de aportar 
+    #en la recuperación de la normalidad.
+    request_data = request.get_json()
+
+    #{
+    #    "RUT": "12532639-0",
+    #}
     
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    UserType = check_user_type(RUT)
+
+    if(UserType != 0): 
+        response = jsonify({"Error": "Usted no puede realizar esta accion"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
+    #Obtener todos los contagiados
+    currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con)
+    
+    #print(type(currentContagiados))
+    #print(type(currentContagiados[0].RUT_Con))
+
+    #Buscamos los ruts de todos los contagiados
+    listaContagiados = []
+    for contagiado in currentContagiados:
+        listaContagiados.append(contagiado.RUT_Con)
+
+    #Con la lista de contagiados podemos ver cuantas
+    #personas infectadas tenemos en el colegio
+    for i in range(len(listaContagiados)):
+        print(listaContagiados[i])
+
+    #Ahora calculamos el tipo de user de cada uno
+    listaTipoUser = []
+    for i in range(len(listaContagiados)):
+        listaTipoUser.append(check_user_type(listaContagiados[i]))
+        print(listaTipoUser[i])
+
+    #Revisamos cuantos contagiados existen por sala
+
+    #Esto por ahora esta limitado a las 4 salas que tenemos
+    #en el programa, pero puede ser expandido despues
+    #haciendo una consulta para revisar cuantas salas hay y
+    #ver el nombre de cada sala
+    contagiosSala = [0, 0, 0, 0]
+    #for i in range(len(listaContagiados)):
+
+    #Revisar contagiado si es alumno
+    if(listaTipoUser[i] == 2):
+        al = Alumno.query.filter_by(Sala_Alu = 0)
+    #Revisar contagiado si es profe
+    if(listaTipoUser[i] == 1):
+       pr = Profesor.query.filter_by(Sala_Pro = 0)
+
+    #NECESITO # DE CONTAGIADOS POR SALA
+    #SUGERENCIA POR SALA
+    #SUGERENCIA GLOBAL
+    
+    return jsonify("Test")
+
+"""
+    #Revisamos alummos de la sala 0
+    students = Alumno.query.filter(Alumno.Sala_Alu == 0)
+
+    print(type(students))
+
+    for student in students:
+        print(student)
+
+    #Revisamos profes de la sala 0
+    profes = Profesor.query.filter(Profesor.Sala_Pro == 0)
+
+    print(type(profes))
+
+    for profe in profes:
+        print(profe)
+"""
+
+
 def check_user_type(RUT):
     #Dado un rut, encuentra y retorna el tipo de usuario
     #0 admin
@@ -456,22 +546,22 @@ def check_user_type(RUT):
     FindUserType = Administrador.query.get(RUT)
     if(FindUserType != None):
         UserType = 0
-        print("Es admin " + str(UserType))
+        #print("Es admin " + str(UserType))
 
     FindUserType = Profesor.query.get(RUT)
     if(FindUserType != None):
         UserType = 1
-        print("Es profesor " + str(UserType))
+        #print("Es profesor " + str(UserType))
 
     FindUserType = Alumno.query.get(RUT)
     if(FindUserType != None):
         UserType = 2
-        print("Es alumno " + str(UserType))
+        #print("Es alumno " + str(UserType))
 
     FindUserType = Apoderado.query.get(RUT)
     if(FindUserType != None):
         UserType = 3
-        print("Es apoderado " + str(UserType))
+        #print("Es apoderado " + str(UserType))
 
     return UserType
 

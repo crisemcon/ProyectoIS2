@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
+from sqlalchemy import text
 
 app = Flask(__name__)
 CORS(app)
@@ -137,6 +138,12 @@ class ContagioSchema(ma.Schema):
     class Meta:
         fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada')
 
+class AlumnoEstadoSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT_Alu','Apellidos','Nombres')
+
+aluEstado_schema = AlumnoEstadoSchema()
+alusEstado_schema = AlumnoEstadoSchema(many=True)
 
 administrador_schema = AdministradorSchema()
 administradores_schema = AdministradorSchema(many=True)
@@ -637,6 +644,56 @@ def check_user_type(RUT):
         #print("Es apoderado " + str(UserType))
 
     return UserType
+
+@app.route('/US5', methods = ['POST','GET'])
+#Como profesor quiero saber los alumnos de mi curso/sala y su estado
+#Permite ver ver al profesor sus alumnos de una sala y su estado.
+def ver_mis_alumnos():
+    request_data = request.get_json()
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    UserType = check_user_type(RUT)
+
+    if(UserType != 1): 
+        response = jsonify({"Error": "Usted no puede realizar esta accion"})
+        #Forbidden
+        response.status_code = 403
+        return response
+    #Se Pregunta por todos los alumnos de un Profesor en una sala
+    consultaSQL1 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND  Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "' ORDER BY Apellidos, Nombres"
+    y1 = db.engine.execute(consultaSQL1)
+
+    #Se pregunta por todos los alumnos contagiados de un profesor en su sala
+    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con ORDER BY Apellidos, Nombres"
+    y2 = db.engine.execute(consultaSQL2)
+
+    #Se pregunta por todos los alumnos sanos de un profesor en su sala
+    consultaSQL2Modif = "SELECT RUT_Alu FROM Contagio,(SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "')AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con"
+    consultaSQL3 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Profesor.RUT_Pro = '" + RUT + "' AND Alumno.RUT_Alu NOT IN ( " + consultaSQL2Modif + ") AND Alumno.RUT_Alu = Persona.RUT ORDER BY Apellidos, Nombres"
+    y3 = db.engine.execute(consultaSQL3)
+
+    results1 = alusEstado_schema.dump(y1)
+    results2 = alusEstado_schema.dump(y2)
+    results3 = alusEstado_schema.dump(y3)
+
+    """
+    if results1 is None:
+        return jsonify({"Usted no tiene alumnos en su sala"})
+    if results2 is None:
+        results2 = "Felicidades, usted no tiene alumnos contagiados en su sala"
+    if results3 is None:
+        results3 = "Atencion, usted no tiene alumnos sanos en su sala"
+    """
+
+    #Se devuelven los alumnos ordenados por apellido y clasificados en las categorias correspondientes
+    return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
+
+
 
 
 

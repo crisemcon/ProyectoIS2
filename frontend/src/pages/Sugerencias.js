@@ -41,6 +41,7 @@ const Sugerencias = (props) => {
 
   useEffect(() => {
     fetchSugerencias();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

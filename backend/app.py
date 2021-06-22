@@ -316,7 +316,11 @@ def delete_persona(rut):
         return response
     return persona_schema.jsonify(persona)
 
+@app.route('/US4', methods = ['GET'])
+def get_estadocolegio():
+    colegioActual = Colegio.query.get(0)
 
+    return colegio_schema.jsonify(colegioActual)
 
 @app.route('/US4', methods = ['POST'])
 def confirmar_cuarentena():

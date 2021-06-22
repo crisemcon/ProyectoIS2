@@ -5,7 +5,7 @@ import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
 
 import { useSelector, useDispatch } from "react-redux";
-import { userSelector, loginUser, clearState } from "../redux/user";
+import { userSelector, loginUser, fetchEstadoColegio, clearState } from "../redux/user";
 import { useNavigate } from "react-router-dom";
 //import Loader from 'react-loader-spinner';
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -48,6 +48,7 @@ const DashboardLayout = () => {
   const { isFetching, isError } = useSelector(userSelector);
   useEffect(() => {
     dispatch(loginUser({ RUT: localStorage.getItem("RUT") }));
+    dispatch(fetchEstadoColegio())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
-from sqlalchemy import and_
 from sqlalchemy import text
 
 app = Flask(__name__)
@@ -141,7 +140,7 @@ class ContagioSchema(ma.Schema):
 
 class AlumnoEstadoSchema(ma.Schema):
     class Meta:
-        fields = ('RUT_Alu','Sala_Alu','RUT_Pro','Sala_Pro')
+        fields = ('RUT_Alu','Apellidos','Nombres')
 
 aluEstado_schema = AlumnoEstadoSchema()
 alusEstado_schema = AlumnoEstadoSchema(many=True)
@@ -502,78 +501,35 @@ def ver_mis_alumnos():
         #Forbidden
         response.status_code = 403
         return response
-    #x = "Hola este es mi rut " + RUT + " y usted es usuario = " + str(UserType)
-    #profesor = Profesor.query.get(RUT)
-    #sala_codigo = profesor.Sala_Pro
-    #all_alumnos = Alumno.query.all()
-    #all_alumnos = Alumno.query.filter(Alumno.Sala_Alu == sala_codigo)
-    #all_alumnos = db.session.query(Alumno).filter(Alumno.Sala_Alu == sala_codigo)
-    #results = alumnos_schema.dump(all_alumnos)
-    #results = profesor_schema.dump(profesor)
-
-
-    consultaSQL1 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND  Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "'"
+    #Se Pregunta por todos los alumnos de un Profesor en una sala
+    consultaSQL1 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND  Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "' ORDER BY Apellidos, Nombres"
     y1 = db.engine.execute(consultaSQL1)
     
-    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con"
+    #Se pregunta por todos los alumnos contagiados de un profesor en su sala
+    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con ORDER BY Apellidos, Nombres"
     y2 = db.engine.execute(consultaSQL2)
 
+    #Se pregunta por todos los alumnos sanos de un profesor en su sala
     consultaSQL2Modif = "SELECT RUT_Alu FROM Contagio,(SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "')AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con"
-    consultaSQL3 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Profesor.RUT_Pro = '" + RUT + "' AND Alumno.RUT_Alu NOT IN ( " + consultaSQL2Modif + ") AND Alumno.RUT_Alu = Persona.RUT "
+    consultaSQL3 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Profesor.RUT_Pro = '" + RUT + "' AND Alumno.RUT_Alu NOT IN ( " + consultaSQL2Modif + ") AND Alumno.RUT_Alu = Persona.RUT ORDER BY Apellidos, Nombres"
     y3 = db.engine.execute(consultaSQL3)
 
-    results1 = alumnos_schema.dump(y1)
-    results2 = alumnos_schema.dump(y2)
-    results3 = alumnos_schema.dump(y3)
+    results1 = alusEstado_schema.dump(y1)
+    results2 = alusEstado_schema.dump(y2)
+    results3 = alusEstado_schema.dump(y3)
+
+    """
     if results1 is None:
         return jsonify({"Usted no tiene alumnos en su sala"})
     if results2 is None:
         results2 = "Felicidades, usted no tiene alumnos contagiados en su sala"
     if results3 is None:
         results3 = "Atencion, usted no tiene alumnos sanos en su sala"
-    #results = profesor_schema.dump(profesor)
+    """
+
+    #Se devuelven los alumnos ordenados por apellido y clasificados en las categorias correspondientes
     return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
 
-
-
-
-
-### ---------------------------
-@app.route('/profesores/<rut>/1', methods = ['GET'])
-def show_Alumnos_contagiados(rut = 'error'):
-    profesor = Profesor.query.get(rut)
-    if (profesor == None):
-        response = jsonify({"error": "No existe un profesor con el RUT especificado"})
-        response.status_code = 404
-        return response
-    sala_codigo = profesor.Sala_Pro
-    #all_alumnos = Alumno.query.all()
-    #all_alumnos = Alumno.query.filter(Alumno.Sala_Alu == sala_codigo)
-
-    
-    consultaSQL1 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND  Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + rut + "'"
-    y1 = db.engine.execute(consultaSQL1)
-    
-    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con"
-    y2 = db.engine.execute(consultaSQL2)
-
-    consultaSQL2Modif = "SELECT RUT_Alu FROM Contagio,(SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + rut + "')AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con"
-    consultaSQL3 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Profesor.RUT_Pro = '" + rut + "' AND Alumno.RUT_Alu NOT IN ( " + consultaSQL2Modif + ") AND Alumno.RUT_Alu = Persona.RUT "
-    y3 = db.engine.execute(consultaSQL3)
-
-    results1 = alusEstado_schema.dump(y1)
-    results2 = alusEstado_schema.dump(y2)
-    results3 = alusEstado_schema.dump(y3)
-    if results1 == None:
-        results1 = "Usted no Tiene alumnos en su sala"
-        return jsonify(results1)
-    if results2 == None:
-        results2 = "Felicidades, usted no tiene alumnos contagiados en su sala"
-    if results3 == None:
-        results3 = "Atencion, usted no tiene alumnos sanos en su sala"
-    #results = profesor_schema.dump(profesor)
-    return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
-### ------------------------------- 
 
 ### START
 if __name__ == "__main__":

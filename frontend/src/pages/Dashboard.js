@@ -8,6 +8,7 @@ import EstudiantesVacunados from "../components/dashboard/EstudiantesVacunados";
 import TotalEstudiantes from "../components/dashboard/TotalEstudiantes";
 import InformarContagio from "../components/dashboard/InformarContagio";
 import EstadoColegio from "../components/dashboard/EstadoColegio";
+import Seremi from "../components/dashboard/Seremi";
 
 import { useSelector } from "react-redux";
 import { userSelector } from "../redux/user";
@@ -29,6 +30,7 @@ const Dashboard = () => {
       >
         <Container maxWidth={false}>
           <Grid container spacing={3}>
+            {Rol === "Administrador" ? <Grid item lg={12} sm={12} xl={12} xs={12}> <Seremi /> </Grid>  : null}
             {Rol !== "Alumno" ? (
               <>
                 <Grid item lg={3} sm={6} xl={3} xs={12}>

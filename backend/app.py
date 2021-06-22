@@ -452,7 +452,12 @@ def recibir_sugerencias():
     #Como administrador deseo recibir sugerencias sobre la acción a tomar 
     #para actuar de forma adecuada y correcta con el objetivo de aportar 
     #en la recuperación de la normalidad.
-    request_data = request.get_json()
+
+    #request_data = request.get_json()
+    ##### Hay un problema al realizar request GET con body, y es un debate actual que aun no se resuelve concretamente.
+    ##### Solucion: recibir el RUT como parametro y no en el body
+    
+    request_data = request.args
 
     #{
     #    "RUT": "12532639-0",

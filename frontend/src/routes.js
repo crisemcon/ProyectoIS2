@@ -9,6 +9,7 @@ import NotFound from './pages/NotFound';
 import ProductList from './pages/ProductList';
 import Settings from './pages/Settings';
 import Salas from './pages/Salas';
+import Sugerencias from './pages/Sugerencias';
 
 const routes = [
   {
@@ -19,6 +20,7 @@ const routes = [
       { path: 'personas', element: <ListaPersonas /> },
       { path: 'salas' , element: <Salas /> },
       { path: 'dashboard', element: <Dashboard /> },
+      { path: 'sugerencias', element: <Sugerencias />},
       { path: 'products', element: <ProductList /> },
       { path: 'settings', element: <Settings /> },
       { path: '*', element: <Navigate to="/404" /> }

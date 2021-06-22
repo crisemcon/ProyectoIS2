@@ -20,7 +20,8 @@ import {
   //User as UserIcon,
   //UserPlus as UserPlusIcon,
   Users as UsersIcon,
-  Box as BoxIcon
+  Box as BoxIcon,
+  Sun as SunIcon
 } from 'react-feather';
 import NavItem from './NavItem';
 
@@ -46,6 +47,11 @@ const items = [
     href: '/app/salas',
     icon: BoxIcon,
     title: 'Salas'
+  },
+  {
+    href: '/app/sugerencias',
+    icon: SunIcon,
+    title: 'Sugerencias'
   }
   /*{
     href: '/app/products',
@@ -156,6 +162,15 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
               key={items[1].title}
               title={items[1].title}
               icon={items[1].icon}
+            /> : null
+          }
+          {
+            Rol === "Administrador" ? 
+            <NavItem
+              href={items[3].href}
+              key={items[3].title}
+              title={items[3].title}
+              icon={items[3].icon}
             /> : null
           }
           <NavItem

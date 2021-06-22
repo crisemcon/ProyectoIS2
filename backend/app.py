@@ -142,8 +142,15 @@ class AlumnoEstadoSchema(ma.Schema):
     class Meta:
         fields = ('RUT_Alu','Apellidos','Nombres')
 
+class PupilosDeApoderadoSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT','Apellidos','Nombres')
+
 aluEstado_schema = AlumnoEstadoSchema()
 alusEstado_schema = AlumnoEstadoSchema(many=True)
+
+pupApo_schema = PupilosDeApoderadoSchema()
+pupsApo_schema = PupilosDeApoderadoSchema(many=True)
 
 administrador_schema = AdministradorSchema()
 administradores_schema = AdministradorSchema(many=True)
@@ -331,7 +338,7 @@ def get_estadocolegio():
 
 @app.route('/US4', methods = ['POST'])
 def confirmar_cuarentena():
-    #Como administrador quiero confirmar cuarentena establecida por el SEREMI para seguir el decreto oficial del país.
+    #Como administrador quiero confirmar cuarentena establecida por el SEREMI para seguir el decreto oficial del pais.
 
     #este caso de uso permite al administrador confirmar
     #o no el establecimiento de cuarentena total en el
@@ -398,7 +405,122 @@ def confirmar_cuarentena():
     else:
         return jsonify(message="Cuarentena establecida por el MINSAL se ha confirmado")
     
+'''
+US1: Como apoderado quiero informar contagio de mi pupilo para que el establecimiento tome las medidas necesarias
 
+Request:
+{
+    "RUT": "41366409-8"
+}
+Response:
+[
+    {
+        "Apellidos": "Rutledge Knapp",
+        "Nombres": "Paula Bryar",
+        "RUT": "24169868-8"
+    }
+]
+'''
+
+##PROBAR CON RUT: 41366409-8
+
+@app.route('/pupiloDeAp', methods = ['GET'])
+def get_pupilos():
+    #verificar que esta persona es apoderado:
+    request_data = request.get_json()
+    print(request_data)
+
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+    
+    if check_user_type(RUT)!= 3:
+        response = jsonify({"error": "Solo apoderados pueden realizar esta acción"})
+        response.status_code = 403 #Forbidden
+        return response
+
+    #Se buscan los hijos del apoderado según su RUT:
+    consultaSQL_rutpupApo = "SELECT RUT_Pup from Apoderado WHERE RUT_Apo = '" + RUT + "'";
+    consultaSQL_pupApo = "SELECT RUT, Nombres, Apellidos from Persona, (" + consultaSQL_rutpupApo + ") AS q1 WHERE RUT = q1.RUT_Pup;"
+    eng = db.engine.execute(consultaSQL_pupApo)
+    results = pupsApo_schema.dump(eng)
+
+    return jsonify(results)
+
+'''
+US1
+Request:
+{
+    "RUT": "41366409-8",
+    "RUT_Alu": "24169868-8",
+    "Fecha": "2021-06-17"
+}
+Response:
+{
+    "Contagio_ID": 1,
+    "Fecha": "2021-06-17",
+    "RUT_Con": "24169868-8",
+    "revisada": false
+}
+'''
+@app.route('/US1', methods = ['POST'])
+def contagio_pupilo():
+    request_data = request.get_json()
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    if 'RUT_Alu' in request_data:
+        RUT_Pup = request_data['RUT_Alu']
+    else:
+        response = jsonify({"error": "RUT Alumno requerido"})
+        response.status_code = 400
+        return response
+
+    if 'Fecha' in request_data:
+        FechaContagio = request_data['Fecha']
+    else: 
+        response = jsonify({"error": "Fecha requerido"})
+        response.status_code = 400
+        return response
+
+    #Revisar que son apoderados y alumnos, y que están relacionados
+    UserType = check_user_type(RUT)
+    AlumnoType = check_user_type(RUT_Pup)
+
+    if(UserType != 3 or AlumnoType != 2):
+        response = jsonify({"error": "No se ha encontrado apoderados ni alumnos con los rut indicados"})
+        response.status_code = 404
+        return response
+
+    consultaSQL_ruts = "SELECT RUT_Pup from Apoderado WHERE RUT_Apo = '" + RUT + "' AND RUT_Pup = '" + RUT_Pup + "';";
+    eng = db.engine.execute(consultaSQL_ruts)
+    pupilo = []
+    for pup in eng:
+        pupilo.append(pup.RUT_Pup)
+    if not pupilo:
+        response = jsonify({"error": "Este pupilo no corresponde al apoderado"})
+        response.status_code = 403 #Forbidden
+        return response
+
+    #Crear contagio
+    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0)
+
+    try:
+        db.session.add(cont)
+        db.session.commit()
+    except Exception as error:
+        response = jsonify({"error": "Error BD"})
+        response.status_code = 400
+        return response
+
+    return contagio_schema.jsonify(cont)
 
 @app.route('/US2', methods = ['POST'])
 def informar_contagio():
@@ -456,8 +578,6 @@ def informar_contagio():
 #    "revisada": false
 #}
 
-   
-
 @app.route('/US3', methods = ['GET'])
 def recibir_sugerencias():
     #Como administrador deseo recibir sugerencias sobre la acción a tomar 
@@ -473,6 +593,7 @@ def recibir_sugerencias():
     #{
     #    "RUT": "12532639-0",
     #}
+    print(request_data)
     
     if 'RUT' in request_data:
         RUT = request_data['RUT']
@@ -480,6 +601,7 @@ def recibir_sugerencias():
         response = jsonify({"error": "RUT requerido"})
         response.status_code = 400
         return response
+
 
     UserType = check_user_type(RUT)
 
@@ -566,6 +688,28 @@ def recibir_sugerencias():
     dictReturn["Sugerencia"] = sugGlobal
 
     return jsonify(dictReturn)
+
+'''
+localhost:5000/US6    [GET]
+Request:
+{
+    RUT: “1231241”,
+    Rol: “admin”
+}
+
+Response:
+{
+    Salas profes estados
+}
+'''
+
+@app.route('/US6', methods = ['GET'])
+def get_estados_salas():
+    all_personas = Persona.query.all()
+    all_salas = Salas.query.all()
+    res_sala = sala_schema.dump(all_salas)
+    results = personas_schema.dump(all_personas) #cambiar
+    return jsonify(results)
 
 @app.route('/contpend', methods = ['GET'])
 def notificaciones_admin():

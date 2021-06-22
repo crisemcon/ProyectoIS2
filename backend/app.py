@@ -690,25 +690,42 @@ def recibir_sugerencias():
     return jsonify(dictReturn)
 
 '''
-localhost:5000/US6    [GET]
+US6: Como administrador quiero saber los alumnos y profesores de una sala y su estado para conocer la situación 
+de salubridad que los involucra.
+
 Request:
 {
-    RUT: “1231241”,
-    Rol: “admin”
+    RUT: "123124-1" (RUT ADMIN)
 }
-
 Response:
 {
     Salas profes estados
 }
 '''
-
 @app.route('/US6', methods = ['GET'])
 def get_estados_salas():
-    all_personas = Persona.query.all()
-    all_salas = Salas.query.all()
-    res_sala = sala_schema.dump(all_salas)
-    results = personas_schema.dump(all_personas) #cambiar
+    request_data = request.get_json()
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    #Verifica que sea admin:
+    UserType = check_user_type(RUT)
+    if UserType != 0:
+        response = jsonify({"error": "Solo admin puede realizar esta acción"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
+    consultaSQL_salas = "SELECT Sala_ID,Nombre FROM Sala;";
+    eng = db.engine.execute(consultaSQL_salas)
+    salas = []
+    for sala in eng:
+        salas.append(sala.Sala_ID)
+
     return jsonify(results)
 
 @app.route('/contpend', methods = ['GET'])

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from sqlalchemy import text
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -146,11 +147,18 @@ class PupilosDeApoderadoSchema(ma.Schema):
     class Meta:
         fields = ('RUT','Apellidos','Nombres')
 
+class PersonasEstSalaSchema(ma.Schema):
+    class Meta:
+        fiels = ('RUT', 'Apellidos', 'Nombres')
+
 aluEstado_schema = AlumnoEstadoSchema()
 alusEstado_schema = AlumnoEstadoSchema(many=True)
 
 pupApo_schema = PupilosDeApoderadoSchema()
 pupsApo_schema = PupilosDeApoderadoSchema(many=True)
+
+perEstado_schema = PersonasEstSalaSchema()
+persEstado_schema = PersonasEstSalaSchema(many=True)
 
 administrador_schema = AdministradorSchema()
 administradores_schema = AdministradorSchema(many=True)
@@ -548,7 +556,6 @@ def informar_contagio():
         response.status_code = 400
         return response
 
-
     UserType = check_user_type(RUT)
 
     if(UserType == 2):
@@ -695,11 +702,11 @@ de salubridad que los involucra.
 
 Request:
 {
-    RUT: "123124-1" (RUT ADMIN)
+    RUT: "12532639-0" (RUT ADMIN)
 }
 Response:
 {
-    Salas profes estados
+    Salas profes alumnos contagios
 }
 '''
 @app.route('/US6', methods = ['GET'])
@@ -721,12 +728,67 @@ def get_estados_salas():
         return response
 
     consultaSQL_salas = "SELECT Sala_ID,Nombre FROM Sala;";
-    eng = db.engine.execute(consultaSQL_salas)
-    salas = []
-    for sala in eng:
-        salas.append(sala.Sala_ID)
+    eng_salas = db.engine.execute(consultaSQL_salas)
+    salas_nameid = {}
+    for sala in eng_salas:
+        salas_nameid[sala.Sala_ID] = sala.Nombre
 
-    return jsonify(results)
+    salas = {} #Dict que se devuelve
+    for sala in salas_nameid:
+        #sala es la key(ID) y salas_nameid[sala] es el value(Nombre)
+        contagio = False
+        personas = set() #asegura que personas sean unicas
+
+        #Profesores
+        consultaSQLaux = "SELECT RUT_Pro FROM Profesor WHERE Sala_Pro = '"+str(sala)+"'";
+        consultaSQL_prof = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Pro = Persona.RUT;";
+        eng_prof = db.engine.execute(consultaSQL_prof)
+        profes = []
+        for prof in eng_prof:
+            personas.add(prof.RUT)
+            profes.append({"RUT": prof.RUT,"Nombres":prof.Nombres, "Apellidos":prof.Apellidos})
+
+        #Estudiantes
+        consultaSQLaux = "SELECT RUT_Alu FROM Alumno WHERE Sala_Alu = '"+str(sala)+"'"
+        consultaSQL_al = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Alu = Persona.RUT;"
+        eng_al = db.engine.execute(consultaSQL_al)
+        alumns = []
+        for al in eng_al:
+            personas.add(al.RUT)
+            alumns.append({"RUT": al.RUT,"Nombres":al.Nombres, "Apellidos":al.Apellidos})
+
+        #Contagios
+        #se itera por Contagio primero, asumiendo que es la que tendrá menos cantidad de elementos que en Personas de la sala
+        consultaSQLaux = "SELECT RUT_Con FROM Contagio"
+        consultaSQL_cont = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Con = Persona.RUT;"
+        eng_cont = db.engine.execute(consultaSQL_cont)
+        cont = []
+        ruts_cont = set()
+        for con in eng_cont:
+            if con.RUT in personas:
+                contagio = True
+                cont.append({"RUT": con.RUT,"Nombres":con.Nombres, "Apellidos":con.Apellidos})
+                ruts_cont.add(con.RUT)
+
+        #No Contagiados
+        no_cont = []
+        for p in eng_prof:
+            if not p.RUT in ruts_cont:
+                no_cont.append({"RUT": p.RUT,"Nombres":p.Nombres, "Apellidos":p.Apellidos})
+        for p in eng_al:
+            if not p.RUT in ruts_cont:
+                no_cont.append({"RUT": p.RUT,"Nombres":p.Nombres, "Apellidos":p.Apellidos})
+        
+        #Estado
+        if(contagio):
+            estado = "CONTAGIADA"
+        else:
+            estado = "SANA"
+
+        nombre = salas_nameid[sala]
+        salas[nombre] = {"Profesores":profes, "Alumnos":alumns, "Contagiados":cont, "Sanos":no_cont, "Estado Sala":estado}
+
+    return json.dumps(salas)
 
 @app.route('/contpend', methods = ['GET'])
 def notificaciones_admin():
@@ -853,9 +915,6 @@ def ver_mis_alumnos():
 
     #Se devuelven los alumnos ordenados por apellido y clasificados en las categorias correspondientes
     return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
-
-
-
 
 
 ### START

@@ -48,7 +48,7 @@ const items = [
   {
     href: "/app/salas",
     icon: BoxIcon,
-    title: "Salas",
+    title: "Detalle Salas",
   },
   {
     href: "/app/sugerencias",
@@ -155,14 +155,14 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
             title={items[0].title}
             icon={items[0].icon}
           />
-          {Rol === "Administrador" ? (
+          {/*Rol === "Administrador" ? (
             <NavItem
               href={items[1].href}
               key={items[1].title}
               title={items[1].title}
               icon={items[1].icon}
             />
-          ) : null}
+          ) : null*/}
           {Rol === "Administrador" ? (
             <NavItem
               href={items[3].href}

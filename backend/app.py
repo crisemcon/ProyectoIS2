@@ -712,7 +712,7 @@ Response:
 '''
 @app.route('/US6', methods = ['GET'])
 def get_estados_salas():
-    request_data = request.get_json()
+    request_data = request.args
     if 'RUT' in request_data:
         RUT = request_data['RUT']
     else: 
@@ -789,7 +789,7 @@ def get_estados_salas():
             estado = "SANA"
 
         nombre = salas_nameid[sala]
-        salas["Sala" + nombre] = {"Profesores":profes, "Alumnos":alumns, "Contagiados":cont, "Sanos":no_cont, "Estado Sala":estado}
+        salas["Sala" + nombre] = {"Profesores":profes, "Alumnos":alumns, "Contagiados":cont, "Sanos":no_cont, "Estado_Sala":estado}
 
     return jsonify(salas)
 

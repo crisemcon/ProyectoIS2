@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from sqlalchemy import text
+import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -567,10 +568,12 @@ def recibir_sugerencias():
 
     return jsonify(dictReturn)
 
+
+
 @app.route('/contpend', methods = ['GET'])
 def notificaciones_admin():
     #Retorna los contagios que no han sido revisados
-    request_data = request.get_json()
+    request_data = request.args
 
     #{
     #    "RUT": "12532639-0",
@@ -613,6 +616,47 @@ def notificaciones_admin():
     results = contagios_schema.dump(contagiadosRevisar)
     return jsonify(results)
 
+
+@app.route('/contagioactivo/<rut>', methods = ['GET'])
+def get_contagio_activo(rut):
+    
+    print(rut)
+    print(type(rut))
+    cont = Contagio.query.filter_by(RUT_Con = rut).all()
+    if(cont == None):
+        response = jsonify({"error": "No existe un contagio con el RUT especificado"})
+        response.status_code = 404
+        return response
+
+    if(len(cont) == 0):
+        print("No hay ninguno a revisar")
+        response = jsonify({"error": "No existe un contagio con el RUT especificado"})
+        response.status_code = 404
+        return response
+    elif(len(cont) >= 2):
+        print("Hay mas de una entrada de contagio para este rut")
+
+    #print(len(cont))
+    #print(type(cont))
+    #print(type(cont[0]))
+    #print(type(cont[0].Fecha))
+    #print(cont[0].Fecha)
+    #print(cont.RUT_Con)
+
+    too_old = datetime.date.today() - datetime.timedelta(days=14)
+    print("Los muy viejos son: ", too_old)
+    for cn in cont:
+        print(cn.Fecha - too_old)
+        if(cn.Fecha <= too_old):
+            print("Es muy viejo, hay que borrar contagio de ID", cn.Contagio_ID)
+        else:
+            #se manda a los resultados
+            results = contagio_schema.dump(cn)
+            return jsonify(results)
+
+
+
+    return jsonify(message="No se encontro")
 
 
 def check_user_type(RUT):
@@ -692,8 +736,6 @@ def ver_mis_alumnos():
 
     #Se devuelven los alumnos ordenados por apellido y clasificados en las categorias correspondientes
     return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
-
-
 
 
 

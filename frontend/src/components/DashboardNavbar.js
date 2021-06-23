@@ -45,7 +45,10 @@ const DashboardNavbar = ({ onMobileNavOpen, ...rest }) => {
         </RouterLink>
         <Box sx={{ flexGrow: 1 }} />
         {
-          EstadoColegio === 0 ? <Chip variant="filled" label={"Estado Colegio: Abierto"} color="secondary"/> : <Chip variant="filled" label={"Estado Colegio: Cuarentena"} color="secondary"/>
+          EstadoColegio === 0 ? <Hidden lgDown><Chip variant="filled" label={"Estado Colegio: Abierto"} style={{backgroundColor:'#8392ea', color:'white'}}/></Hidden> : <Hidden lgDown><Chip variant="filled" label={"Estado Colegio: Cuarentena"} color="secondary"/></Hidden>
+        }
+        {
+          EstadoColegio === 0 ? <Hidden lgUp><Chip variant="filled" size='small' label={"Abierto"} style={{backgroundColor:'#8392ea', color:'white'}}/></Hidden> : <Hidden lgUp><Chip variant="filled" size='small' label={"Cuarentena"} color="secondary"/></Hidden>
         }
         
         <Box sx={{ flexGrow: 1 }} />

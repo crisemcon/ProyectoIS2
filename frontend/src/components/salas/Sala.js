@@ -4,12 +4,26 @@ import {
     Card,
     CardContent,
     Grid,
-    Typography
+    Typography,
+    CardActionArea,
+    CardHeader,
+    Avatar,
   } from '@material-ui/core';
+  import { red, green } from '@material-ui/core/colors';
 
   
   const TotalEstudiantes = (props) => (
     <Card {...props} sx={{ height: '100%' }}>
+      <CardActionArea onClick={() => props.setSelectedSala(props.nombre)}>
+      <CardHeader
+        avatar={
+          <Avatar sx={props.contagiados !== 0 ? { bgcolor: red[400] } : { bgcolor: green[400] }} >
+            {" "}
+          </Avatar>
+        }
+        title={props.nombre}
+        subheader={props.contagiados === 1 ? props.contagiados + " Contagiado" : props.contagiados + " Contagiados"}
+      />
       <CardContent>
         <Grid
           container
@@ -18,21 +32,22 @@ import {
         >
           <Grid item>
             <Typography
-              color="textSecondary"
+              color="textPrimary"
               gutterBottom
-              variant="h6"
+              variant="body1"
             >
-              Sala 104
+              {props.profesores === 1 ? props.profesores + " Profesor" :props.profesores + " Profesores"}
             </Typography>
             <Typography
               color="textPrimary"
-              variant="h3"
+              variant="body1"
             >
-              XX Estudiantes
+              {props.alumnos === 1 ? props.alumnos + " Alumno" :props.alumnos + " Estudiantes"}
             </Typography>
           </Grid>
         </Grid>
       </CardContent>
+      </CardActionArea>
     </Card>
   );
   

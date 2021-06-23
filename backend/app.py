@@ -772,11 +772,13 @@ def get_estados_salas():
 
         #No Contagiados
         no_cont = []
+        eng_prof = db.engine.execute(consultaSQL_prof)
         for p in eng_prof:
-            if not p.RUT in ruts_cont:
+            if p.RUT not in ruts_cont:
                 no_cont.append({"RUT": p.RUT,"Nombres":p.Nombres, "Apellidos":p.Apellidos})
+        eng_al = db.engine.execute(consultaSQL_al)
         for p in eng_al:
-            if not p.RUT in ruts_cont:
+            if p.RUT not in ruts_cont:
                 no_cont.append({"RUT": p.RUT,"Nombres":p.Nombres, "Apellidos":p.Apellidos})
         
         #Estado
@@ -786,9 +788,9 @@ def get_estados_salas():
             estado = "SANA"
 
         nombre = salas_nameid[sala]
-        salas[nombre] = {"Profesores":profes, "Alumnos":alumns, "Contagiados":cont, "Sanos":no_cont, "Estado Sala":estado}
+        salas["Sala" + nombre] = {"Profesores":profes, "Alumnos":alumns, "Contagiados":cont, "Sanos":no_cont, "Estado Sala":estado}
 
-    return json.dumps(salas)
+    return jsonify(salas)
 
 @app.route('/contpend', methods = ['GET'])
 def notificaciones_admin():

@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import { useEffect } from "react";
+import { Link as RouterLink, useLocation } from "react-router-dom";
+import PropTypes from "prop-types";
 import {
   Avatar,
   Box,
@@ -9,8 +9,8 @@ import {
   Drawer,
   Hidden,
   List,
-  Typography
-} from '@material-ui/core';
+  Typography,
+} from "@material-ui/core";
 import {
   //AlertCircle as AlertCircleIcon,
   BarChart as BarChartIcon,
@@ -21,37 +21,44 @@ import {
   //UserPlus as UserPlusIcon,
   Users as UsersIcon,
   Box as BoxIcon,
-  Sun as SunIcon
-} from 'react-feather';
-import NavItem from './NavItem';
+  Sun as SunIcon,
+  Home as HomeIcon
+} from "react-feather";
+import NavItem from "./NavItem";
 
-import { useSelector } from 'react-redux';
-import { userSelector } from '../redux/user';
+import { useSelector } from "react-redux";
+import { userSelector } from "../redux/user";
+import getInitials from '../utils/getInitials';
 
-const user = {
-  avatar: '/static/images/avatars/defaultavatar.jpg',
-};
+/*const user = {
+  avatar: "/static/images/avatars/defaultavatar.jpg",
+};*/
 
 const items = [
   {
-    href: '/app/dashboard',
+    href: "/app/dashboard",
     icon: BarChartIcon,
-    title: 'Dashboard'
+    title: "Dashboard",
   },
   {
-    href: '/app/personas',
+    href: "/app/personas",
     icon: UsersIcon,
-    title: 'Personas'
+    title: "Personas",
   },
   {
-    href: '/app/salas',
+    href: "/app/salas",
     icon: BoxIcon,
-    title: 'Salas'
+    title: "Salas",
   },
   {
-    href: '/app/sugerencias',
+    href: "/app/sugerencias",
     icon: SunIcon,
-    title: 'Sugerencias'
+    title: "Sugerencias",
+  },
+  {
+    href: "/app/alumnos",
+    icon: HomeIcon,
+    title: "Mis Alumnos"
   }
   /*{
     href: '/app/products',
@@ -88,9 +95,7 @@ const items = [
 const DashboardSidebar = ({ onMobileClose, openMobile }) => {
   const location = useLocation();
 
-  const { Nombres, Apellidos, Rol} = useSelector(
-    userSelector
-  );
+  const { Nombres, Apellidos, Rol } = useSelector(userSelector);
 
   useEffect(() => {
     if (openMobile && onMobileClose) {
@@ -102,39 +107,34 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
   const content = (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%'
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
       }}
     >
       <Box
         sx={{
-          alignItems: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          p: 2
+          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          p: 2,
         }}
       >
         <Avatar
           component={RouterLink}
-          src={user.avatar}
           sx={{
-            cursor: 'pointer',
+            cursor: "pointer",
             width: 64,
-            height: 64
+            height: 64,
           }}
           to="/app/account"
-        />
-        <Typography
-          color="textPrimary"
-          variant="h5"
         >
-          {Nombres +" "+ Apellidos}
+          {getInitials(Nombres)}
+        </Avatar>
+        <Typography color="textPrimary" variant="h5">
+          {Nombres + " " + Apellidos}
         </Typography>
-        <Typography
-          color="textSecondary"
-          variant="body2"
-        >
+        <Typography color="textSecondary" variant="body2">
           {Rol}
         </Typography>
       </Box>
@@ -150,35 +150,44 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
             />
           ))*/}
           <NavItem
-              href={items[0].href}
-              key={items[0].title}
-              title={items[0].title}
-              icon={items[0].icon}
-            />
-          {
-            Rol === "Administrador" ? 
+            href={items[0].href}
+            key={items[0].title}
+            title={items[0].title}
+            icon={items[0].icon}
+          />
+          {Rol === "Administrador" ? (
             <NavItem
               href={items[1].href}
               key={items[1].title}
               title={items[1].title}
               icon={items[1].icon}
-            /> : null
-          }
-          {
-            Rol === "Administrador" ? 
+            />
+          ) : null}
+          {Rol === "Administrador" ? (
             <NavItem
               href={items[3].href}
               key={items[3].title}
               title={items[3].title}
               icon={items[3].icon}
-            /> : null
-          }
-          <NavItem
+            />
+          ) : null}
+          {Rol === "Administrador" ? (
+            <NavItem
               href={items[2].href}
               key={items[2].title}
               title={items[2].title}
               icon={items[2].icon}
             />
+          ) : null}
+          {
+            Rol === "Profesor" ? 
+            <NavItem
+              href={items[4].href}
+              key={items[4].title}
+              title={items[4].title}
+              icon={items[4].icon}
+            /> : null
+          }
         </List>
       </Box>
       <Box sx={{ flexGrow: 1 }} />
@@ -195,8 +204,8 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
           variant="temporary"
           PaperProps={{
             sx: {
-              width: 256
-            }
+              width: 256,
+            },
           }}
         >
           {content}
@@ -211,8 +220,8 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
             sx: {
               width: 256,
               top: 64,
-              height: 'calc(100% - 64px)'
-            }
+              height: "calc(100% - 64px)",
+            },
           }}
         >
           {content}
@@ -224,12 +233,12 @@ const DashboardSidebar = ({ onMobileClose, openMobile }) => {
 
 DashboardSidebar.propTypes = {
   onMobileClose: PropTypes.func,
-  openMobile: PropTypes.bool
+  openMobile: PropTypes.bool,
 };
 
 DashboardSidebar.defaultProps = {
-  onMobileClose: () => { },
-  openMobile: false
+  onMobileClose: () => {},
+  openMobile: false,
 };
 
 export default DashboardSidebar;

@@ -10,6 +10,7 @@ import ProductList from './pages/ProductList';
 import Settings from './pages/Settings';
 import Salas from './pages/Salas';
 import Sugerencias from './pages/Sugerencias';
+import Alumnos from './pages/Alumnos';
 
 const routes = [
   {
@@ -23,6 +24,7 @@ const routes = [
       { path: 'sugerencias', element: <Sugerencias />},
       { path: 'products', element: <ProductList /> },
       { path: 'settings', element: <Settings /> },
+      { path: 'alumnos', element: <Alumnos />},
       { path: '*', element: <Navigate to="/404" /> }
     ]
   },

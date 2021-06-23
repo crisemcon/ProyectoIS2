@@ -43,10 +43,15 @@ const InformarContagioDialog = (props) => {
         setIsLoading(false);
         props.onClose();
       } catch (e) {
-        console.log("Error", e.response.data.error);
+        //console.log("Error", e.response.data.error);
+        /*if(e.response.data.error === undefined){
+          props.handleOpenAlert("error", "Error al conectar con el servidor"); 
+        } else {
+          props.handleOpenAlert("error", e.response.data.error); 
+        }*/
+        props.handleOpenAlert("error", "Error al conectar con el servidor"); 
         setIsLoading(false);
         props.onClose();
-        props.handleOpenAlert("error", e.response.data.error); 
       }
   }
 

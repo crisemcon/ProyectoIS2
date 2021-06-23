@@ -88,6 +88,7 @@ const InformarContagio = (props) => {
               <InformarContagioPupiloDialog
                 open={openPupilo}
                 onClose={handleClosePupilo}
+                handleOpenAlert={handleOpenAlert}
               />
             </Grid>
           ) : null}

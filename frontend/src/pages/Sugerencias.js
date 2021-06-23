@@ -34,13 +34,14 @@ const Sugerencias = (props) => {
       }
       setIsLoading(false);
     } catch (e) {
-      console.log("Error", e.response.data.error);
+      console.log("Error", e);
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchSugerencias();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

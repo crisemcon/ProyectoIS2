@@ -427,7 +427,7 @@ Response:
 @app.route('/pupiloDeAp', methods = ['GET'])
 def get_pupilos():
     #verificar que esta persona es apoderado:
-    request_data = request.get_json()
+    request_data = request.args
     print(request_data)
 
     if 'RUT' in request_data:

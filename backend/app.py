@@ -202,6 +202,14 @@ def login():
         response.status_code = 404
         return response
     response = persona_schema.dump(persona)
+
+
+    if (request_data['password'] != persona.password):
+        response = jsonify({"Error": "Contrasena incorrecta"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
     
     admin = Administrador.query.get(RUT)
     if(admin != None):

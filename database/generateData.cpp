@@ -64,4 +64,12 @@ int main(){
         rutNumber = rutNumber + 1;
 
     }
+
+    cout << "passwords para cada rut" << endl;
+    for (int i = 0; i < 100; ++i)
+    {
+        cout << "UPDATE Persona SET password = '1234' WHERE RUT = '" << ruts[i] <<"';"<<endl;
+    }
 }
+
+//UPDATE Persona SET password = '1234' WHERE RUT = 12532639-0

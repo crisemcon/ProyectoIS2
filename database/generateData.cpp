@@ -63,5 +63,11 @@ int main(){
         cout << "INSERT INTO Profesor (RUT_Pro, Sala_Pro) VALUES (\"" << ruts[rutProfe] << "\","<< salaRandom<< ");"<<endl;
         rutNumber = rutNumber + 1;
 
+    cout << "passwords para cada rut" << endl;
+    for (int i = 0; i < 100; ++i)
+    {
+        cout << "UPDATE Persona SET password = '1234' WHERE RUT = '" << ruts[i] <<"';"<<endl;
     }
 }
+
+//UPDATE Persona SET password = '1234' WHERE RUT = 12532639-0

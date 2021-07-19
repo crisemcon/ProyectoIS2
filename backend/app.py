@@ -25,14 +25,16 @@ class Persona(db.Model):
     Correo = db.Column(db.String(100), nullable=False)
     Telefono = db.Column(db.String(15))
     Direccion = db.Column(db.String(250))
+    password = db.Column(db.String(255), nullable=False)
 
-    def __init__(self, RUT, Nombres, Apellidos, Correo, Telefono, Direccion):
+    def __init__(self, RUT, Nombres, Apellidos, Correo, Telefono, Direccion, password):
         self.RUT = RUT,
         self.Nombres = Nombres,
         self.Apellidos = Apellidos,
         self.Correo = Correo,
         self.Telefono = Telefono,
         self.Direccion = Direccion
+        self.password = password
 
 class Administrador(db.Model):
     __tablename__ = "Administrador"
@@ -110,7 +112,7 @@ class Contagio(db.Model):
 ### ESQUEMAS
 class PersonaSchema(ma.Schema):
     class Meta:
-        fields = ('RUT', 'Nombres','Apellidos','Correo','Telefono','Direccion')
+        fields = ('RUT', 'Nombres','Apellidos','Correo','Telefono','Direccion','password')
 
 class AdministradorSchema(ma.Schema):
     class Meta:
@@ -200,6 +202,14 @@ def login():
         response.status_code = 404
         return response
     response = persona_schema.dump(persona)
+
+
+    if (request_data['password'] != persona.password):
+        response = jsonify({"Error": "Contrasena incorrecta"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
     
     admin = Administrador.query.get(RUT)
     if(admin != None):
@@ -284,7 +294,14 @@ def add_persona():
         Direccion = request_data['Direccion']
     else: Direccion = ""
 
-    persona = Persona(RUT, Nombres, Apellidos, Correo, Telefono, Direccion)
+    if 'password' in request_data:
+        password = request_data['password']
+    else: 
+        response = jsonify({"error": "password requerido"})
+        response.status_code = 400
+        return response
+
+    persona = Persona(RUT, Nombres, Apellidos, Correo, Telefono, Direccion, password)
 
     try:
         db.session.add(persona)
@@ -315,6 +332,8 @@ def update_persona(rut):
         persona.Telefono = request_data['Telefono']
     if 'Direccion' in request_data:
         persona.Direccion = request_data['Direccion']
+    if 'password' in request_data:
+        persona.password = request_data['password']
     try:
         db.session.commit()
     except Exception as error:

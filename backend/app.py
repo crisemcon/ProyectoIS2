@@ -194,8 +194,16 @@ def login():
     request_data = request.get_json()
     print("/////////////////////////////////////")
     print(request_data)
+    if (not 'password' in request_data) : 
+        response = jsonify({"error": "La contrasena es requerida"});
+        response.status_code = 400
+        return response
     if 'RUT' in request_data:
         RUT = request_data['RUT']
+    else :
+        response = jsonify({"error": "El RUT es requerido"});
+        response.status_code = 400
+        return response
     persona = Persona.query.get(RUT)
     if(persona == None):
         response = jsonify({"error": "No existe una persona con el RUT especificado"})
@@ -205,7 +213,7 @@ def login():
 
 
     if (request_data['password'] != persona.password):
-        response = jsonify({"Error": "Contrasena incorrecta"})
+        response = jsonify({"error": "Contrasena incorrecta"})
         #Forbidden
         response.status_code = 403
         return response

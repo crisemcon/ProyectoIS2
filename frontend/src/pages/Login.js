@@ -21,8 +21,8 @@ const Login = () => {
     userSelector
   );
 
-  const onSubmit = (RUT) => {
-    dispatch(loginUser({RUT: RUT}));
+  const onSubmit = (RUT, password) => {
+    dispatch(loginUser({RUT: RUT, password: password}));
   };
 
   useEffect(() => {
@@ -65,7 +65,7 @@ const Login = () => {
               RUT: "",
             }}
             onSubmit={(e) => {
-              onSubmit(e.RUT)
+              onSubmit(e.RUT, e.password)
             }}
           >
             {({
@@ -81,15 +81,28 @@ const Login = () => {
                   </Typography>
                 </Box>
                 <TextField
-                  error={isError}
+                  //error={isError}
                   fullWidth
-                  helperText={errorMessage}
+                  //helperText={errorMessage}
                   label="RUT"
                   margin="normal"
                   name="RUT"
                   onBlur={handleBlur}
                   onChange={handleChange}
                   value={values.RUT}
+                  variant="outlined"
+                />
+                <TextField
+                  error={isError}
+                  fullWidth
+                  helperText={errorMessage}
+                  label="Password"
+                  margin="normal"
+                  name="password"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  type="password"
+                  value={values.password}
                   variant="outlined"
                 />
                 <Box sx={{ py: 2 }}>

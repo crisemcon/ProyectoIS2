@@ -31,6 +31,7 @@ const DashboardNavbar = ({ onMobileNavOpen, ...rest }) => {
 
   const logOut = () => {
     localStorage.removeItem('RUT');
+    localStorage.removeItem('password');
     navigate('/login', { replace: true });
   }
 

@@ -47,7 +47,7 @@ const DashboardLayout = () => {
   const dispatch = useDispatch();
   const { isFetching, isError } = useSelector(userSelector);
   useEffect(() => {
-    dispatch(loginUser({ RUT: localStorage.getItem("RUT") }));
+    dispatch(loginUser({ RUT: localStorage.getItem("RUT"), password: localStorage.getItem("password") }));
     dispatch(fetchEstadoColegio())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

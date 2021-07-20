@@ -3,12 +3,13 @@ import axiosClient from "../config/axios";
 
 export const loginUser = createAsyncThunk(
   "users/login",
-  async ({ RUT }, thunkAPI) => {
+  async ({ RUT, password }, thunkAPI) => {
     try {
-      const response = await axiosClient.post("/login", { RUT: RUT });
+      const response = await axiosClient.post("/login", { RUT: RUT, password: password });
       let data = await response.data;
       if (response.status === 200) {
         localStorage.setItem("RUT", data.RUT);
+        localStorage.setItem("password", data.password);
         return data;
       } else {
         return thunkAPI.rejectWithValue(data);

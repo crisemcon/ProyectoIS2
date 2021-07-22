@@ -98,6 +98,7 @@ class Contagio(db.Model):
     RUT_Con = db.Column(db.String(10), db.ForeignKey(Persona.RUT))
     Fecha = db.Column(db.Date, nullable=False)
     revisada = db.Column(db.Boolean, nullable=False)
+    resultado = db.Column(db.Boolean)
     
     #Fue necesario quitar esta parte para poder funcionar con el 
     #auto increment de la BD
@@ -107,6 +108,7 @@ class Contagio(db.Model):
         self.RUT_Con = RUT_Con,
         self.Fecha = Fecha,
         self.revisada = revisada
+        self.resultado = resultado
 
 
 ### ESQUEMAS
@@ -140,7 +142,7 @@ class ColegioSchema(ma.Schema):
 
 class ContagioSchema(ma.Schema):
     class Meta:
-        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada')
+        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada', 'resultado')
 
 class AlumnoEstadoSchema(ma.Schema):
     class Meta:
@@ -566,8 +568,14 @@ def informar_contagio():
     #Como request solicita el RUT de la persona y la FECHA del contagio
     #{
     #    "RUT": "12532639-0",
-    #    "Fecha": "2021-06-17"
-    #}  
+    #    "Fecha": "2021-06-17",
+    #    "resultado": "True/False/Null",
+    #    "CE":"1"
+    #} 
+
+    #CE puede ser 1 o 0 dependiendo si hubo o no contacto estrecho
+    #con el grupo de personas 
+    #CE es lo que permite realizar el caso de uso 11
     
     #Ver si se ingreso el rut
     if 'RUT' in request_data:
@@ -580,11 +588,31 @@ def informar_contagio():
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
     else: 
-        response = jsonify({"error": "Fecha requerido"})
+        response = jsonify({"error": "Fecha requerida"})
+        response.status_code = 400
+        return response
+
+    if 'resultado' in request_data:
+        resultadoPCR = request_data['resultado']
+    else: 
+        response = jsonify({"error": "Resultado PCR requerido"})
+        response.status_code = 400
+        return response
+
+    #WIP
+    if 'CE' in request_data:
+        CE = request_data['CE']
+    else: 
+        response = jsonify({"error": "CE requerido"})
         response.status_code = 400
         return response
 
     UserType = check_user_type(RUT)
+
+    print(CE)
+    print(type(CE))
+    print(int(CE))
+    print(type(int(CE)))
 
     if(UserType == 2):
         response = jsonify({"error": "Alumnos no pueden informar contagios"})
@@ -593,7 +621,23 @@ def informar_contagio():
         return response
 
     #falta cambiar el 5 por el auto-increasing 1
-    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0)
+    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = resultadoPCR)
+
+    if((int(CE) == 1) and (UserType == 3)):
+        #se contagia el grupo estecho
+        #esto quiere decir que se revisan los apoderados
+        #y los posibles pupilos
+
+        #en este caso, solo apoderado es quien debe preocuparse de esto
+        #por esto verificamos que el tipo de user sea apoderado
+        apoderadoContagiar = Apoderado.query.filter_by(RUT_Apo = RUT).all()
+        #for apod in apoderadoContagiar:
+            #seleccionamos a todos los pupilos que esten bajo este apoderado
+            #guardamos su rut para informar el contagio
+            #apod.RUT_Apo
+
+        #Alumno.query.filter_by(RUT_Alu = 0).all()
+
 
     try:
         db.session.add(nuevoContagio)
@@ -623,6 +667,9 @@ def recibir_sugerencias():
     ##### Hay un problema al realizar request GET con body, y es un debate actual que aun no se resuelve concretamente.
     ##### Solucion: recibir el RUT como parametro y no en el body
     
+    #En US3, US5 y US6, sería bueno visualizar las fechas de contagio o
+    #los días transcurridos o faltantes de los 11 días de cuarentena de cada contagiado.
+
     request_data = request.args
 
     #{
@@ -647,13 +694,18 @@ def recibir_sugerencias():
         return response
 
     #Obtener todos los contagiados
-    currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con, Contagio.Contagio_ID)
+    currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con, Contagio.Contagio_ID, Contagio.Fecha)
 
+    #print(len(currentContagiados))
     #Buscamos los ruts de todos los contagiados
     listaContagiados = []
+    listaFechasContagiados = []
     for contagiado in currentContagiados:
+        #print("a")
         listaContagiados.append(contagiado.RUT_Con)
+        listaFechasContagiados.append(contagiado.Fecha)
 
+    print(len(listaContagiados))
     #Con la lista de contagiados podemos ver cuantas
     #personas infectadas tenemos en el colegio
     #for i in range(len(listaContagiados)):
@@ -664,6 +716,7 @@ def recibir_sugerencias():
     for i in range(len(listaContagiados)):
         listaTipoUser.append(check_user_type(listaContagiados[i]))
         #print(listaTipoUser[i])
+    print(len(listaTipoUser))
 
     #Revisamos cuantos contagiados existen por sala
 
@@ -686,19 +739,44 @@ def recibir_sugerencias():
 
     #Revisamos la lista de contagiados y
     #agregamos los contagios a la sala respectiva
+    #guardamos la sala del contagiado
+    #esta parte quedo horrible pero tengo mucha lata de programar
+    #y no quiero hacer nada y funciona, podria ser mucho mas
+    #limpio, bonito y eficiente, pero me quedan 2 neuronas funcionando
+    #y definitivamente no quieren trabajar ahora
+    salaContagiados = []
+    rutsContagiadosSalas = []
+    fechaContagiados = []
+    nombresContagiadosSalas = []
+    apellidosContagiadosSalas = []
     for i in range(len(listaContagiados)):
         #Revisar contagiado si es alumno
         if(listaTipoUser[i] == 2):
             al = Alumno.query.get(listaContagiados[i])
+            nomAp = Persona.query.get(listaContagiados[i])
             contagiosSala[al.Sala_Alu] += 1 
+            salaContagiados.append(al.Sala_Alu)
+            rutsContagiadosSalas.append(listaContagiados[i])
+            fechaContagiados.append(listaFechasContagiados[i])
+            nombresContagiadosSalas.append(nomAp.Nombres)
+            apellidosContagiadosSalas.append(nomAp.Apellidos)
 
         #Revisar contagiado si es profe
         if(listaTipoUser[i] == 1):
-           pr = Profesor.query.get(listaContagiados[i])
-           contagiosSala[pr.Sala_Pro] += 1 
+            pr = Profesor.query.get(listaContagiados[i])
+            nomAp = Persona.query.get(listaContagiados[i])
+            contagiosSala[pr.Sala_Pro] += 1 
+            salaContagiados.append(pr.Sala_Pro)
+            rutsContagiadosSalas.append(listaContagiados[i])
+            fechaContagiados.append(listaFechasContagiados[i])
+            nombresContagiadosSalas.append(nomAp.Nombres)
+            apellidosContagiadosSalas.append(nomAp.Apellidos)
 
     for i in range(len(contagiosSala)):
         print("Sala", nombresSala[i] , "tiene", contagiosSala[i], "contagios")
+
+    for i in range(len(salaContagiados)):
+        print("Persona",rutsContagiadosSalas[i],"esta en sala",salaContagiados[i],"con fecha", fechaContagiados[i], "nombre",nombresContagiadosSalas[i],"apellidos",apellidosContagiadosSalas[i])
 
     #Este es el pedazo de codigo que genera el return para el
     #frontend
@@ -711,7 +789,21 @@ def recibir_sugerencias():
             sugerencia = "Considerar cerrar la sala temporalmente"
         else:
             sugerencia = "Cerrar sala temporalmente"
-        listaContagios["Sala " + nombresSala[i]] = {"Contagiados":contagiosSala[i],"Sugerencia":sugerencia}
+
+        personasSala = []
+        for j in range(len(salaContagiados)):
+            if (salaContagiados[j] == i):
+                fechaTermino = fechaContagiados[j] + datetime.timedelta(days=14)
+                personasSala.append({"RUT": rutsContagiadosSalas[j],"Nombres":nombresContagiadosSalas[j], "Apellidos":apellidosContagiadosSalas[j], "Fecha":fechaContagiados[j], "Fecha Termino":fechaTermino})
+
+
+            
+        listaContagios["Sala " + nombresSala[i]] = {"Contagiados":contagiosSala[i],"Sugerencia":sugerencia,"Personas":personasSala}
+        #obtener todos los contagiados de una sala
+        #dar fecha de cuando se infectaron y cuando se van a desinfectar
+        #agregar las personas contagiadas de cada sala con su fecha
+
+
 
     dictReturn["ContagiadosSalas"] = listaContagios
     if(sum(contagiosSala) == 0):

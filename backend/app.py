@@ -517,7 +517,6 @@ def ver_mis_alumnos():
     results1 = alusEstado_schema.dump(y1)
     results2 = alusEstado_schema.dump(y2)
     results3 = alusEstado_schema.dump(y3)
-
     """
     if results1 is None:
         return jsonify({"Usted no tiene alumnos en su sala"})
@@ -526,7 +525,6 @@ def ver_mis_alumnos():
     if results3 is None:
         results3 = "Atencion, usted no tiene alumnos sanos en su sala"
     """
-
     #Se devuelven los alumnos ordenados por apellido y clasificados en las categorias correspondientes
     return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
 

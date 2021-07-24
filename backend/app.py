@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from sqlalchemy import text
+import json
+import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -23,14 +25,16 @@ class Persona(db.Model):
     Correo = db.Column(db.String(100), nullable=False)
     Telefono = db.Column(db.String(15))
     Direccion = db.Column(db.String(250))
+    password = db.Column(db.String(255), nullable=False)
 
-    def __init__(self, RUT, Nombres, Apellidos, Correo, Telefono, Direccion):
+    def __init__(self, RUT, Nombres, Apellidos, Correo, Telefono, Direccion, password):
         self.RUT = RUT,
         self.Nombres = Nombres,
         self.Apellidos = Apellidos,
         self.Correo = Correo,
         self.Telefono = Telefono,
         self.Direccion = Direccion
+        self.password = password
 
 class Administrador(db.Model):
     __tablename__ = "Administrador"
@@ -94,6 +98,7 @@ class Contagio(db.Model):
     RUT_Con = db.Column(db.String(10), db.ForeignKey(Persona.RUT))
     Fecha = db.Column(db.Date, nullable=False)
     revisada = db.Column(db.Boolean, nullable=False)
+    resultado = db.Column(db.Boolean)
     
     #Fue necesario quitar esta parte para poder funcionar con el 
     #auto increment de la BD
@@ -103,12 +108,13 @@ class Contagio(db.Model):
         self.RUT_Con = RUT_Con,
         self.Fecha = Fecha,
         self.revisada = revisada
+        self.resultado = resultado
 
 
 ### ESQUEMAS
 class PersonaSchema(ma.Schema):
     class Meta:
-        fields = ('RUT', 'Nombres','Apellidos','Correo','Telefono','Direccion')
+        fields = ('RUT', 'Nombres','Apellidos','Correo','Telefono','Direccion','password')
 
 class AdministradorSchema(ma.Schema):
     class Meta:
@@ -136,14 +142,28 @@ class ColegioSchema(ma.Schema):
 
 class ContagioSchema(ma.Schema):
     class Meta:
-        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada')
+        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada', 'resultado')
 
 class AlumnoEstadoSchema(ma.Schema):
     class Meta:
         fields = ('RUT_Alu','Apellidos','Nombres')
 
+class PupilosDeApoderadoSchema(ma.Schema):
+    class Meta:
+        fields = ('RUT','Apellidos','Nombres')
+
+class PersonasEstSalaSchema(ma.Schema):
+    class Meta:
+        fiels = ('RUT', 'Apellidos', 'Nombres')
+
 aluEstado_schema = AlumnoEstadoSchema()
 alusEstado_schema = AlumnoEstadoSchema(many=True)
+
+pupApo_schema = PupilosDeApoderadoSchema()
+pupsApo_schema = PupilosDeApoderadoSchema(many=True)
+
+perEstado_schema = PersonasEstSalaSchema()
+persEstado_schema = PersonasEstSalaSchema(many=True)
 
 administrador_schema = AdministradorSchema()
 administradores_schema = AdministradorSchema(many=True)
@@ -176,14 +196,30 @@ def login():
     request_data = request.get_json()
     print("/////////////////////////////////////")
     print(request_data)
+    if (not 'password' in request_data) : 
+        response = jsonify({"error": "La contrasena es requerida"});
+        response.status_code = 400
+        return response
     if 'RUT' in request_data:
         RUT = request_data['RUT']
+    else :
+        response = jsonify({"error": "El RUT es requerido"});
+        response.status_code = 400
+        return response
     persona = Persona.query.get(RUT)
     if(persona == None):
         response = jsonify({"error": "No existe una persona con el RUT especificado"})
         response.status_code = 404
         return response
     response = persona_schema.dump(persona)
+
+
+    if (request_data['password'] != persona.password):
+        response = jsonify({"error": "Contrasena incorrecta"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
     
     admin = Administrador.query.get(RUT)
     if(admin != None):
@@ -268,7 +304,14 @@ def add_persona():
         Direccion = request_data['Direccion']
     else: Direccion = ""
 
-    persona = Persona(RUT, Nombres, Apellidos, Correo, Telefono, Direccion)
+    if 'password' in request_data:
+        password = request_data['password']
+    else: 
+        response = jsonify({"error": "password requerido"})
+        response.status_code = 400
+        return response
+
+    persona = Persona(RUT, Nombres, Apellidos, Correo, Telefono, Direccion, password)
 
     try:
         db.session.add(persona)
@@ -299,6 +342,8 @@ def update_persona(rut):
         persona.Telefono = request_data['Telefono']
     if 'Direccion' in request_data:
         persona.Direccion = request_data['Direccion']
+    if 'password' in request_data:
+        persona.password = request_data['password']
     try:
         db.session.commit()
     except Exception as error:
@@ -323,11 +368,15 @@ def delete_persona(rut):
         return response
     return persona_schema.jsonify(persona)
 
+@app.route('/US4', methods = ['GET'])
+def get_estadocolegio():
+    colegioActual = Colegio.query.get(0)
 
+    return colegio_schema.jsonify(colegioActual)
 
 @app.route('/US4', methods = ['POST'])
 def confirmar_cuarentena():
-    #Como administrador quiero confirmar cuarentena establecida por el SEREMI para seguir el decreto oficial del país.
+    #Como administrador quiero confirmar cuarentena establecida por el SEREMI para seguir el decreto oficial del pais.
 
     #este caso de uso permite al administrador confirmar
     #o no el establecimiento de cuarentena total en el
@@ -390,11 +439,126 @@ def confirmar_cuarentena():
     #   esto es lo que retorna, uno de estos 2 mensajes
     #}
     if(int(Estado) == 0):
-        return jsonify("Se ha levantado la cuarentena total establecida por el MINSAL")
+        return jsonify(message="Se ha levantado la cuarentena total establecida por el MINSAL")
     else:
-        return jsonify("Cuarentena establecida por el MINSAL se ha confirmado")
+        return jsonify(message="Cuarentena establecida por el MINSAL se ha confirmado")
     
+'''
+US1: Como apoderado quiero informar contagio de mi pupilo para que el establecimiento tome las medidas necesarias
 
+Request:
+{
+    "RUT": "41366409-8"
+}
+Response:
+[
+    {
+        "Apellidos": "Rutledge Knapp",
+        "Nombres": "Paula Bryar",
+        "RUT": "24169868-8"
+    }
+]
+'''
+
+##PROBAR CON RUT: 41366409-8
+
+@app.route('/pupiloDeAp', methods = ['GET'])
+def get_pupilos():
+    #verificar que esta persona es apoderado:
+    request_data = request.args
+    print(request_data)
+
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+    
+    if check_user_type(RUT)!= 3:
+        response = jsonify({"error": "Solo apoderados pueden realizar esta acción"})
+        response.status_code = 403 #Forbidden
+        return response
+
+    #Se buscan los hijos del apoderado según su RUT:
+    consultaSQL_rutpupApo = "SELECT RUT_Pup from Apoderado WHERE RUT_Apo = '" + RUT + "'";
+    consultaSQL_pupApo = "SELECT RUT, Nombres, Apellidos from Persona, (" + consultaSQL_rutpupApo + ") AS q1 WHERE RUT = q1.RUT_Pup;"
+    eng = db.engine.execute(consultaSQL_pupApo)
+    results = pupsApo_schema.dump(eng)
+
+    return jsonify(results)
+
+'''
+US1
+Request:
+{
+    "RUT": "41366409-8",
+    "RUT_Alu": "24169868-8",
+    "Fecha": "2021-06-17"
+}
+Response:
+{
+    "Contagio_ID": 1,
+    "Fecha": "2021-06-17",
+    "RUT_Con": "24169868-8",
+    "revisada": false
+}
+'''
+@app.route('/US1', methods = ['POST'])
+def contagio_pupilo():
+    request_data = request.get_json()
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    if 'RUT_Alu' in request_data:
+        RUT_Pup = request_data['RUT_Alu']
+    else:
+        response = jsonify({"error": "RUT Alumno requerido"})
+        response.status_code = 400
+        return response
+
+    if 'Fecha' in request_data:
+        FechaContagio = request_data['Fecha']
+    else: 
+        response = jsonify({"error": "Fecha requerido"})
+        response.status_code = 400
+        return response
+
+    #Revisar que son apoderados y alumnos, y que están relacionados
+    UserType = check_user_type(RUT)
+    AlumnoType = check_user_type(RUT_Pup)
+
+    if(UserType != 3 or AlumnoType != 2):
+        response = jsonify({"error": "No se ha encontrado apoderados ni alumnos con los rut indicados"})
+        response.status_code = 404
+        return response
+
+    consultaSQL_ruts = "SELECT RUT_Pup from Apoderado WHERE RUT_Apo = '" + RUT + "' AND RUT_Pup = '" + RUT_Pup + "';";
+    eng = db.engine.execute(consultaSQL_ruts)
+    pupilo = []
+    for pup in eng:
+        pupilo.append(pup.RUT_Pup)
+    if not pupilo:
+        response = jsonify({"error": "Este pupilo no corresponde al apoderado"})
+        response.status_code = 403 #Forbidden
+        return response
+
+    #Crear contagio
+    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0)
+
+    try:
+        db.session.add(cont)
+        db.session.commit()
+    except Exception as error:
+        response = jsonify({"error": "Error BD"})
+        response.status_code = 400
+        return response
+
+    return contagio_schema.jsonify(cont)
 
 @app.route('/US2', methods = ['POST'])
 def informar_contagio():
@@ -404,8 +568,14 @@ def informar_contagio():
     #Como request solicita el RUT de la persona y la FECHA del contagio
     #{
     #    "RUT": "12532639-0",
-    #    "Fecha": "2021-06-17"
-    #}  
+    #    "Fecha": "2021-06-17",
+    #    "resultado": "True/False/Null",
+    #    "CE":"1"
+    #} 
+
+    #CE puede ser 1 o 0 dependiendo si hubo o no contacto estrecho
+    #con el grupo de personas 
+    #CE es lo que permite realizar el caso de uso 11
     
     #Ver si se ingreso el rut
     if 'RUT' in request_data:
@@ -418,12 +588,31 @@ def informar_contagio():
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
     else: 
-        response = jsonify({"error": "Fecha requerido"})
+        response = jsonify({"error": "Fecha requerida"})
         response.status_code = 400
         return response
 
+    if 'resultado' in request_data:
+        resultadoPCR = request_data['resultado']
+    else: 
+        response = jsonify({"error": "Resultado PCR requerido"})
+        response.status_code = 400
+        return response
+
+    #WIP
+    if 'CE' in request_data:
+        CE = request_data['CE']
+    else: 
+        response = jsonify({"error": "CE requerido"})
+        response.status_code = 400
+        return response
 
     UserType = check_user_type(RUT)
+
+    print(CE)
+    print(type(CE))
+    print(int(CE))
+    print(type(int(CE)))
 
     if(UserType == 2):
         response = jsonify({"error": "Alumnos no pueden informar contagios"})
@@ -432,7 +621,23 @@ def informar_contagio():
         return response
 
     #falta cambiar el 5 por el auto-increasing 1
-    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0)
+    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = resultadoPCR)
+
+    if((int(CE) == 1) and (UserType == 3)):
+        #se contagia el grupo estecho
+        #esto quiere decir que se revisan los apoderados
+        #y los posibles pupilos
+
+        #en este caso, solo apoderado es quien debe preocuparse de esto
+        #por esto verificamos que el tipo de user sea apoderado
+        apoderadoContagiar = Apoderado.query.filter_by(RUT_Apo = RUT).all()
+        #for apod in apoderadoContagiar:
+            #seleccionamos a todos los pupilos que esten bajo este apoderado
+            #guardamos su rut para informar el contagio
+            #apod.RUT_Apo
+
+        #Alumno.query.filter_by(RUT_Alu = 0).all()
+
 
     try:
         db.session.add(nuevoContagio)
@@ -444,6 +649,7 @@ def informar_contagio():
 
     return contagio_schema.jsonify(nuevoContagio)
 
+#Esta ruta retorna
 #{
 #    "Contagio_ID": 13,
 #    "Fecha": "2021-06-19",
@@ -451,7 +657,309 @@ def informar_contagio():
 #    "revisada": false
 #}
 
+@app.route('/US3', methods = ['GET'])
+def recibir_sugerencias():
+    #Como administrador deseo recibir sugerencias sobre la acción a tomar 
+    #para actuar de forma adecuada y correcta con el objetivo de aportar 
+    #en la recuperación de la normalidad.
+
+    #request_data = request.get_json()
+    ##### Hay un problema al realizar request GET con body, y es un debate actual que aun no se resuelve concretamente.
+    ##### Solucion: recibir el RUT como parametro y no en el body
     
+    #En US3, US5 y US6, sería bueno visualizar las fechas de contagio o
+    #los días transcurridos o faltantes de los 11 días de cuarentena de cada contagiado.
+
+    request_data = request.args
+
+    #{
+    #    "RUT": "12532639-0",
+    #}
+    print(request_data)
+    
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+
+    UserType = check_user_type(RUT)
+
+    if(UserType != 0): 
+        response = jsonify({"Error": "Usted no puede realizar esta accion"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
+    #Obtener todos los contagiados
+    currentContagiados = Contagio.query.with_entities(Contagio.RUT_Con, Contagio.Contagio_ID, Contagio.Fecha)
+
+    #print(len(currentContagiados))
+    #Buscamos los ruts de todos los contagiados
+    listaContagiados = []
+    listaFechasContagiados = []
+    for contagiado in currentContagiados:
+        #print("a")
+        listaContagiados.append(contagiado.RUT_Con)
+        listaFechasContagiados.append(contagiado.Fecha)
+
+    print(len(listaContagiados))
+    #Con la lista de contagiados podemos ver cuantas
+    #personas infectadas tenemos en el colegio
+    #for i in range(len(listaContagiados)):
+    #    print(listaContagiados[i])
+
+    #Ahora calculamos el tipo de user de cada uno
+    listaTipoUser = []
+    for i in range(len(listaContagiados)):
+        listaTipoUser.append(check_user_type(listaContagiados[i]))
+        #print(listaTipoUser[i])
+    print(len(listaTipoUser))
+
+    #Revisamos cuantos contagiados existen por sala
+
+    #query para obtener salas
+    currentSalas = Sala.query.with_entities(Sala.Sala_ID, Sala.Nombre)
+    
+    #Len salas tiene el largo de salas, se usa despues
+    #ContagiosSala = cantidad de contagios por sala
+    #NombresSala = nombres de cada sala
+    #IDsSala = ids de cada sala
+    lenSalas = 0
+    contagiosSala = []
+    nombresSala = []
+    idsSala = []
+    for salaAux in currentSalas:
+        lenSalas += 1
+        idsSala.append(salaAux.Sala_ID)
+        nombresSala.append(salaAux.Nombre)
+        contagiosSala.append(0)
+
+    #Revisamos la lista de contagiados y
+    #agregamos los contagios a la sala respectiva
+    #guardamos la sala del contagiado
+    #esta parte quedo horrible pero tengo mucha lata de programar
+    #y no quiero hacer nada y funciona, podria ser mucho mas
+    #limpio, bonito y eficiente, pero me quedan 2 neuronas funcionando
+    #y definitivamente no quieren trabajar ahora
+    salaContagiados = []
+    rutsContagiadosSalas = []
+    fechaContagiados = []
+    nombresContagiadosSalas = []
+    apellidosContagiadosSalas = []
+    for i in range(len(listaContagiados)):
+        #Revisar contagiado si es alumno
+        if(listaTipoUser[i] == 2):
+            al = Alumno.query.get(listaContagiados[i])
+            nomAp = Persona.query.get(listaContagiados[i])
+            contagiosSala[al.Sala_Alu] += 1 
+            salaContagiados.append(al.Sala_Alu)
+            rutsContagiadosSalas.append(listaContagiados[i])
+            fechaContagiados.append(listaFechasContagiados[i])
+            nombresContagiadosSalas.append(nomAp.Nombres)
+            apellidosContagiadosSalas.append(nomAp.Apellidos)
+
+        #Revisar contagiado si es profe
+        if(listaTipoUser[i] == 1):
+            pr = Profesor.query.get(listaContagiados[i])
+            nomAp = Persona.query.get(listaContagiados[i])
+            contagiosSala[pr.Sala_Pro] += 1 
+            salaContagiados.append(pr.Sala_Pro)
+            rutsContagiadosSalas.append(listaContagiados[i])
+            fechaContagiados.append(listaFechasContagiados[i])
+            nombresContagiadosSalas.append(nomAp.Nombres)
+            apellidosContagiadosSalas.append(nomAp.Apellidos)
+
+    for i in range(len(contagiosSala)):
+        print("Sala", nombresSala[i] , "tiene", contagiosSala[i], "contagios")
+
+    for i in range(len(salaContagiados)):
+        print("Persona",rutsContagiadosSalas[i],"esta en sala",salaContagiados[i],"con fecha", fechaContagiados[i], "nombre",nombresContagiadosSalas[i],"apellidos",apellidosContagiadosSalas[i])
+
+    #Este es el pedazo de codigo que genera el return para el
+    #frontend
+    dictReturn = {"ContagiadosTotal": sum(contagiosSala)}
+    listaContagios = {}
+    for i in range(lenSalas):
+        if(contagiosSala[i] == 0):
+            sugerencia = "Continuar procedimientos usuales"
+        elif(contagiosSala[i]==1):
+            sugerencia = "Considerar cerrar la sala temporalmente"
+        else:
+            sugerencia = "Cerrar sala temporalmente"
+
+        personasSala = []
+        for j in range(len(salaContagiados)):
+            if (salaContagiados[j] == i):
+                fechaTermino = fechaContagiados[j] + datetime.timedelta(days=14)
+                personasSala.append({"RUT": rutsContagiadosSalas[j],"Nombres":nombresContagiadosSalas[j], "Apellidos":apellidosContagiadosSalas[j], "Fecha":fechaContagiados[j], "Fecha Termino":fechaTermino})
+
+
+            
+        listaContagios["Sala " + nombresSala[i]] = {"Contagiados":contagiosSala[i],"Sugerencia":sugerencia,"Personas":personasSala}
+        #obtener todos los contagiados de una sala
+        #dar fecha de cuando se infectaron y cuando se van a desinfectar
+        #agregar las personas contagiadas de cada sala con su fecha
+
+
+
+    dictReturn["ContagiadosSalas"] = listaContagios
+    if(sum(contagiosSala) == 0):
+        sugGlobal = "Continuar funcionamiento normal"
+    elif(sum(contagiosSala) <= 5):
+        sugGlobal = "Considerar cierre temporal del establecimiento"
+    else:
+        sugGlobal = "Es necesario solicitar cierre temporal del establecimiento"
+    dictReturn["Sugerencia"] = sugGlobal
+
+    return jsonify(dictReturn)
+
+'''
+US6: Como administrador quiero saber los alumnos y profesores de una sala y su estado para conocer la situación 
+de salubridad que los involucra.
+
+Request:
+{
+    RUT: "12532639-0" (RUT ADMIN)
+}
+Response:
+{
+    Salas profes alumnos contagios
+}
+'''
+@app.route('/US6', methods = ['GET'])
+def get_estados_salas():
+    request_data = request.args
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    #Verifica que sea admin:
+    UserType = check_user_type(RUT)
+    if UserType != 0:
+        response = jsonify({"error": "Solo admin puede realizar esta acción"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
+    consultaSQL_salas = "SELECT Sala_ID,Nombre FROM Sala;";
+    eng_salas = db.engine.execute(consultaSQL_salas)
+    salas_nameid = {}
+    for sala in eng_salas:
+        salas_nameid[sala.Sala_ID] = sala.Nombre
+
+    salas = {} #Dict que se devuelve
+    for sala in salas_nameid:
+        #sala es la key(ID) y salas_nameid[sala] es el value(Nombre)
+        contagio = False
+        personas = set() #asegura que personas sean unicas
+
+        #Profesores
+        consultaSQLaux = "SELECT RUT_Pro FROM Profesor WHERE Sala_Pro = '"+str(sala)+"'";
+        consultaSQL_prof = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Pro = Persona.RUT;";
+        eng_prof = db.engine.execute(consultaSQL_prof)
+        profes = []
+        for prof in eng_prof:
+            personas.add(prof.RUT)
+            profes.append({"RUT": prof.RUT,"Nombres":prof.Nombres, "Apellidos":prof.Apellidos})
+
+        #Estudiantes
+        consultaSQLaux = "SELECT RUT_Alu FROM Alumno WHERE Sala_Alu = '"+str(sala)+"'"
+        consultaSQL_al = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Alu = Persona.RUT;"
+        eng_al = db.engine.execute(consultaSQL_al)
+        alumns = []
+        for al in eng_al:
+            personas.add(al.RUT)
+            alumns.append({"RUT": al.RUT,"Nombres":al.Nombres, "Apellidos":al.Apellidos})
+
+        #Contagios
+        #se itera por Contagio primero, asumiendo que es la que tendrá menos cantidad de elementos que en Personas de la sala
+        consultaSQLaux = "SELECT RUT_Con FROM Contagio"
+        consultaSQL_cont = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Con = Persona.RUT;"
+        eng_cont = db.engine.execute(consultaSQL_cont)
+        cont = []
+        ruts_cont = set()
+        for con in eng_cont:
+            if con.RUT in personas:
+                contagio = True
+                cont.append({"RUT": con.RUT,"Nombres":con.Nombres, "Apellidos":con.Apellidos})
+                ruts_cont.add(con.RUT)
+
+        #No Contagiados
+        no_cont = []
+        eng_prof = db.engine.execute(consultaSQL_prof)
+        for p in eng_prof:
+            if p.RUT not in ruts_cont:
+                no_cont.append({"RUT": p.RUT,"Nombres":p.Nombres, "Apellidos":p.Apellidos})
+        eng_al = db.engine.execute(consultaSQL_al)
+        for p in eng_al:
+            if p.RUT not in ruts_cont:
+                no_cont.append({"RUT": p.RUT,"Nombres":p.Nombres, "Apellidos":p.Apellidos})
+        
+        #Estado
+        if(contagio):
+            estado = "CONTAGIADA"
+        else:
+            estado = "SANA"
+
+        nombre = salas_nameid[sala]
+        salas["Sala" + nombre] = {"Profesores":profes, "Alumnos":alumns, "Contagiados":cont, "Sanos":no_cont, "Estado_Sala":estado}
+
+    return jsonify(salas)
+
+@app.route('/contpend', methods = ['GET'])
+def notificaciones_admin():
+    #Retorna los contagios que no han sido revisados
+    request_data = request.get_json()
+
+    #{
+    #    "RUT": "12532639-0",
+    #}
+    
+    if 'RUT' in request_data:
+        RUT = request_data['RUT']
+    else: 
+        response = jsonify({"error": "RUT requerido"})
+        response.status_code = 400
+        return response
+
+    UserType = check_user_type(RUT)
+
+    if(UserType != 0): 
+        response = jsonify({"Error": "Usted no puede realizar esta accion"})
+        #Forbidden
+        response.status_code = 403
+        return response
+
+
+    #Obtener todos los contagiados a revisar
+    contagiadosRevisar = Contagio.query.filter_by(revisada = 0).all()
+
+    if(len(contagiadosRevisar) == 0):
+        print("No hay ninguno a revisar")
+        return jsonify(message="No hay nuevas notificaciones")
+
+    for cont in contagiadosRevisar:
+        print("asd")
+        cont.revisada = 1
+    
+    try:
+        db.session.commit()
+    except Exception as error:
+        response = jsonify({"error": str(error.orig)})
+        response.status_code = 400
+        return response
+
+    results = contagios_schema.dump(contagiadosRevisar)
+    return jsonify(results)
+
+
+
 def check_user_type(RUT):
     #Dado un rut, encuentra y retorna el tipo de usuario
     #0 admin
@@ -463,22 +971,22 @@ def check_user_type(RUT):
     FindUserType = Administrador.query.get(RUT)
     if(FindUserType != None):
         UserType = 0
-        print("Es admin " + str(UserType))
+        #print("Es admin " + str(UserType))
 
     FindUserType = Profesor.query.get(RUT)
     if(FindUserType != None):
         UserType = 1
-        print("Es profesor " + str(UserType))
+        #print("Es profesor " + str(UserType))
 
     FindUserType = Alumno.query.get(RUT)
     if(FindUserType != None):
         UserType = 2
-        print("Es alumno " + str(UserType))
+        #print("Es alumno " + str(UserType))
 
     FindUserType = Apoderado.query.get(RUT)
     if(FindUserType != None):
         UserType = 3
-        print("Es apoderado " + str(UserType))
+        #print("Es apoderado " + str(UserType))
 
     return UserType
 
@@ -504,7 +1012,7 @@ def ver_mis_alumnos():
     #Se Pregunta por todos los alumnos de un Profesor en una sala
     consultaSQL1 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND  Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "' ORDER BY Apellidos, Nombres"
     y1 = db.engine.execute(consultaSQL1)
-    
+
     #Se pregunta por todos los alumnos contagiados de un profesor en su sala
     consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con ORDER BY Apellidos, Nombres"
     y2 = db.engine.execute(consultaSQL2)
@@ -517,6 +1025,7 @@ def ver_mis_alumnos():
     results1 = alusEstado_schema.dump(y1)
     results2 = alusEstado_schema.dump(y2)
     results3 = alusEstado_schema.dump(y3)
+
     """
     if results1 is None:
         return jsonify({"Usted no tiene alumnos en su sala"})
@@ -525,9 +1034,50 @@ def ver_mis_alumnos():
     if results3 is None:
         results3 = "Atencion, usted no tiene alumnos sanos en su sala"
     """
+
     #Se devuelven los alumnos ordenados por apellido y clasificados en las categorias correspondientes
     return jsonify(todos_los_alumnos = results1, alumnos_contagiados = results2, alumnos_sanos = results3)
 
+@app.route('/contagioactivo/<rut>', methods = ['GET'])
+def get_contagio_activo(rut):
+    
+    print(rut)
+    print(type(rut))
+    cont = Contagio.query.filter_by(RUT_Con = rut).all()
+    if(cont == None):
+        response = jsonify({"error": "No existe un contagio con el RUT especificado"})
+        response.status_code = 404
+        return response
+
+    if(len(cont) == 0):
+        print("No hay ninguno a revisar")
+        response = jsonify({"error": "No existe un contagio con el RUT especificado"})
+        response.status_code = 404
+        return response
+    elif(len(cont) >= 2):
+        print("Hay mas de una entrada de contagio para este rut")
+
+    #print(len(cont))
+    #print(type(cont))
+    #print(type(cont[0]))
+    #print(type(cont[0].Fecha))
+    #print(cont[0].Fecha)
+    #print(cont.RUT_Con)
+
+    too_old = datetime.date.today() - datetime.timedelta(days=14)
+    print("Los muy viejos son: ", too_old)
+    for cn in cont:
+        print(cn.Fecha - too_old)
+        if(cn.Fecha <= too_old):
+            print("Es muy viejo, hay que borrar contagio de ID", cn.Contagio_ID)
+        else:
+            #se manda a los resultados
+            results = contagio_schema.dump(cn)
+            return jsonify(results)
+
+
+
+    return jsonify(message="No se encontro")
 
 ### START
 if __name__ == "__main__":

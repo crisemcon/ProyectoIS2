@@ -195,7 +195,7 @@ CREATE TABLE Contagio (
 );
 
 --se agrega autoincremento al id de los contagios. De esta manera no es necesario especificar un id al insertar contagio
-ALTER TABLE Contagio CHANGE Contagio_ID Contagio_ID int NOT NULL AUTO_INCREMENT ;
+ALTER TABLE Contagio CHANGE Contagio_ID Contagio_ID int NOT NULL AUTO_INCREMENT 
 
 
 
@@ -208,3 +208,111 @@ DELIMITER $$
 CREATE TRIGGER `avisoAdm` AFTER INSERT ON `Contagio` FOR EACH ROW UPDATE Administrador SET alerta = alerta + 1
 $$
 DELIMITER ;
+
+ALTER TABLE Persona ADD password varchar(255); 
+
+UPDATE Persona SET password = '1234' WHERE RUT = '12532639-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '12593465-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '13255581-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '14105509-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '14181442-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '14450006-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '14792146-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '15543286-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '15758496-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '16299096-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '16626139-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '17609704-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '18878684-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '18931101-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '19437134-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '19583393-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '19831634-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '19939277-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '20939311-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '21800293-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '23915573-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '24169868-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '25807367-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '25959826-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '26518150-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '26599883-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '27241406-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '27714436-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '27752510-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '28002750-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '28083850-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '28153700-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '29112855-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '29139155-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '29594686-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '29677454-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '30254369-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '30474216-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '30808158-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '30880050-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '30910097-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '31102861-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '31386431-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '31456164-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '32359130-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '33261987-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '33389375-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '33969997-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '34317335-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '34416216-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '35043371-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '35684778-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '35941280-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '36137770-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '36986521-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '38535834-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '39696570-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '39848103-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '40012026-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '40234336-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '40277027-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '40305107-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '40321590-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '41085108-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '41248575-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '41322492-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '41366409-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '41691010-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '41789765-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '42481690-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '43169863-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '43594004-8';
+UPDATE Persona SET password = '1234' WHERE RUT = '43619552-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '44127484-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '44447252-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '44775314-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '44969015-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '45832874-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '46247486-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '46921204-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '47008596-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '47174420-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '47560456-3';
+UPDATE Persona SET password = '1234' WHERE RUT = '47624538-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '47738328-9';
+UPDATE Persona SET password = '1234' WHERE RUT = '48361811-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '49461277-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '50636543-0';
+UPDATE Persona SET password = '1234' WHERE RUT = '50649764-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '50817862-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '5691367-K';
+UPDATE Persona SET password = '1234' WHERE RUT = '6465312-1';
+UPDATE Persona SET password = '1234' WHERE RUT = '6829550-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '7201253-4';
+UPDATE Persona SET password = '1234' WHERE RUT = '7597573-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '8071934-5';
+UPDATE Persona SET password = '1234' WHERE RUT = '9068609-7';
+UPDATE Persona SET password = '1234' WHERE RUT = '9127699-2';
+UPDATE Persona SET password = '1234' WHERE RUT = '9403375-6';
+UPDATE Persona SET password = '1234' WHERE RUT = '9483631-K';
+
+
+ALTER TABLE Persona MODIFY COLUMN password VARCHAR(255) NOT NULL;
+
+ALTER TABLE Contagio ADD COLUMN resultado BOOLEAN;

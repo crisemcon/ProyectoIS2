@@ -103,7 +103,7 @@ class Contagio(db.Model):
     #Fue necesario quitar esta parte para poder funcionar con el 
     #auto increment de la BD
     #def __init__(self, Contagio_ID, RUT_Con, Fecha, revisada):
-    def __init__(self, RUT_Con, Fecha, revisada):
+    def __init__(self, RUT_Con, Fecha, revisada, resultado):
         #self.Contagio_ID = Contagio_ID,
         self.RUT_Con = RUT_Con,
         self.Fecha = Fecha,
@@ -609,10 +609,20 @@ def informar_contagio():
 
     UserType = check_user_type(RUT)
 
-    print(CE)
-    print(type(CE))
-    print(int(CE))
-    print(type(int(CE)))
+    #print(CE)
+    #print(type(CE))
+    #print(int(CE))
+    #print(type(int(CE)))
+
+
+    print("resultado pcr", resultadoPCR)
+
+    if (int(resultadoPCR) == 0):
+        newPCR = bool(0)
+    elif (int(resultadoPCR) == 1):
+        newPCR = bool(1)
+    else:
+        newPCR = None
 
     if(UserType == 2):
         response = jsonify({"error": "Alumnos no pueden informar contagios"})
@@ -621,7 +631,7 @@ def informar_contagio():
         return response
 
     #falta cambiar el 5 por el auto-increasing 1
-    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = resultadoPCR)
+    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = newPCR)
 
     if((int(CE) == 1) and (UserType == 3)):
         #se contagia el grupo estecho

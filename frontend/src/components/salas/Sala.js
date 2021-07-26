@@ -22,7 +22,9 @@ import {
           </Avatar>
         }
         title={props.nombre}
+        titleTypographyProps={{variant: "h5"}}
         subheader={props.contagiados === 1 ? props.contagiados + " Contagiado" : props.contagiados + " Contagiados"}
+        subheaderTypographyProps={{variant: "h4"}}
       />
       <CardContent>
         <Grid

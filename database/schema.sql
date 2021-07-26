@@ -316,3 +316,5 @@ UPDATE Persona SET password = '1234' WHERE RUT = '9483631-K';
 ALTER TABLE Persona MODIFY COLUMN password VARCHAR(255) NOT NULL;
 
 ALTER TABLE Contagio ADD COLUMN resultado BOOLEAN;
+
+ALTER TABLE Contagio ADD Fecha_termino Date 

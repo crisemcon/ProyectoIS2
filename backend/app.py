@@ -815,7 +815,7 @@ def recibir_sugerencias():
         personasSala = []
         for j in range(len(salaContagiados)):
             if (salaContagiados[j] == i):
-                fechaTermino = fechaContagiados[j] + datetime.timedelta(days=14)
+                fechaTermino = fechaContagiados[j] + timedelta(days=14)
                 personasSala.append({"RUT": rutsContagiadosSalas[j],"Nombres":nombresContagiadosSalas[j], "Apellidos":apellidosContagiadosSalas[j], "Fecha":fechaContagiados[j], "Fecha Termino":fechaTermino})
 
 

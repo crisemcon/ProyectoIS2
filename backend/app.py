@@ -114,8 +114,6 @@ class Contagio(db.Model):
         self.resultado = resultado
         self.Fecha_termino = Fecha_termino
 
-
-
 ### ESQUEMAS
 class PersonaSchema(ma.Schema):
     class Meta:
@@ -152,6 +150,7 @@ class ContagioSchema(ma.Schema):
 class AlumnoEstadoSchema(ma.Schema):
     class Meta:
         fields = ('RUT_Alu','Apellidos','Nombres', 'Fecha','resultado', 'Fecha_termino')
+
 
 class PupilosDeApoderadoSchema(ma.Schema):
     class Meta:
@@ -529,6 +528,7 @@ def contagio_pupilo():
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
         Fechafinal = fecha_terminoContagio(request_data['Fecha'])
+
     else: 
         response = jsonify({"error": "Fecha requerido"})
         response.status_code = 400
@@ -557,6 +557,7 @@ def contagio_pupilo():
     #eng2 = db.engine.execute(consultaSQLFechaTermino)
     #Crear contagio
     cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = None, Fecha_termino = str(Fechafinal) )#puse None temporalmente para trabajar
+
 
     try:
         db.session.add(cont)
@@ -596,6 +597,7 @@ def informar_contagio():
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
         Fechafinal = fecha_terminoContagio(request_data['Fecha'])
+
     else: 
         response = jsonify({"error": "Fecha requerida"})
         response.status_code = 400
@@ -618,10 +620,21 @@ def informar_contagio():
 
     UserType = check_user_type(RUT)
 
-    print(CE)
-    print(type(CE))
-    print(int(CE))
-    print(type(int(CE)))
+
+    #print(CE)
+    #print(type(CE))
+    #print(int(CE))
+    #print(type(int(CE)))
+
+
+    print("resultado pcr", resultadoPCR)
+
+    if (int(resultadoPCR) == 0):
+        newPCR = bool(0)
+    elif (int(resultadoPCR) == 1):
+        newPCR = bool(1)
+    else:
+        newPCR = None
 
     if(UserType == 2):
         response = jsonify({"error": "Alumnos no pueden informar contagios"})
@@ -630,7 +643,7 @@ def informar_contagio():
         return response
 
     #falta cambiar el 5 por el auto-increasing 1
-    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = resultadoPCR, Fecha_termino = str(Fechafinal) )
+    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = newPCR, Fecha_termino = str(Fechafinal))
 
     if((int(CE) == 1) and (UserType == 3)):
         #se contagia el grupo estecho
@@ -1026,7 +1039,6 @@ def ver_mis_alumnos():
     consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres, Fecha, resultado, Fecha_termino FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con ORDER BY Apellidos, Nombres"
     y2 = db.engine.execute(consultaSQL2)
 
-
     #Se pregunta por todos los alumnos sanos de un profesor en su sala
     consultaSQL2Modif = "SELECT RUT_Alu FROM Contagio,(SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Persona.RUT = Alumno.RUT_Alu AND Profesor.RUT_Pro = '" + RUT + "')AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con"
     consultaSQL3 = "SELECT RUT_Alu, Apellidos, Nombres FROM Profesor, Alumno, Persona WHERE Profesor.Sala_Pro = Alumno.Sala_Alu AND Profesor.RUT_Pro = '" + RUT + "' AND Alumno.RUT_Alu NOT IN ( " + consultaSQL2Modif + ") AND Alumno.RUT_Alu = Persona.RUT ORDER BY Apellidos, Nombres"
@@ -1094,6 +1106,7 @@ def fecha_terminoContagio(fecha):
     dentroDe14Dias = ahora + timedelta(days = 14)
     return dentroDe14Dias
     pass
+
 
 ### START
 if __name__ == "__main__":

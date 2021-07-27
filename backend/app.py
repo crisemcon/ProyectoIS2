@@ -4,7 +4,9 @@ from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from sqlalchemy import text
 import json
-import datetime
+from datetime import datetime
+from datetime import timedelta
+from sqlalchemy import update
 
 app = Flask(__name__)
 CORS(app)
@@ -99,17 +101,18 @@ class Contagio(db.Model):
     Fecha = db.Column(db.Date, nullable=False)
     revisada = db.Column(db.Boolean, nullable=False)
     resultado = db.Column(db.Boolean)
+    Fecha_termino = db.Column(db.Date, nullable=False)
     
     #Fue necesario quitar esta parte para poder funcionar con el 
     #auto increment de la BD
     #def __init__(self, Contagio_ID, RUT_Con, Fecha, revisada):
-    def __init__(self, RUT_Con, Fecha, revisada, resultado):
+    def __init__(self, RUT_Con, Fecha, revisada, resultado, Fecha_termino):
         #self.Contagio_ID = Contagio_ID,
         self.RUT_Con = RUT_Con,
         self.Fecha = Fecha,
         self.revisada = revisada
         self.resultado = resultado
-
+        self.Fecha_termino = Fecha_termino
 
 ### ESQUEMAS
 class PersonaSchema(ma.Schema):
@@ -142,11 +145,12 @@ class ColegioSchema(ma.Schema):
 
 class ContagioSchema(ma.Schema):
     class Meta:
-        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada', 'resultado')
+        fields = ('Contagio_ID', 'RUT_Con', 'Fecha', 'revisada', 'resultado', 'Fecha_termino')
 
 class AlumnoEstadoSchema(ma.Schema):
     class Meta:
-        fields = ('RUT_Alu','Apellidos','Nombres')
+        fields = ('RUT_Alu','Apellidos','Nombres', 'Fecha','resultado', 'Fecha_termino')
+
 
 class PupilosDeApoderadoSchema(ma.Schema):
     class Meta:
@@ -523,6 +527,8 @@ def contagio_pupilo():
 
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
+        Fechafinal = fecha_terminoContagio(request_data['Fecha'])
+
     else: 
         response = jsonify({"error": "Fecha requerido"})
         response.status_code = 400
@@ -547,8 +553,11 @@ def contagio_pupilo():
         response.status_code = 403 #Forbidden
         return response
 
+    #consultaSQLFechaTermino = "SELECT DATE_ADD ('" + FechaContagio + "', INTERVAL +14 DAY);"
+    #eng2 = db.engine.execute(consultaSQLFechaTermino)
     #Crear contagio
-    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0)
+    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = None, Fecha_termino = str(Fechafinal) )#puse None temporalmente para trabajar
+
 
     try:
         db.session.add(cont)
@@ -587,6 +596,8 @@ def informar_contagio():
 
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
+        Fechafinal = fecha_terminoContagio(request_data['Fecha'])
+
     else: 
         response = jsonify({"error": "Fecha requerida"})
         response.status_code = 400
@@ -608,6 +619,7 @@ def informar_contagio():
         return response
 
     UserType = check_user_type(RUT)
+
 
     #print(CE)
     #print(type(CE))
@@ -631,7 +643,7 @@ def informar_contagio():
         return response
 
     #falta cambiar el 5 por el auto-increasing 1
-    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = newPCR)
+    nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = newPCR, Fecha_termino = str(Fechafinal))
 
     if((int(CE) == 1) and (UserType == 3)):
         #se contagia el grupo estecho
@@ -1024,7 +1036,7 @@ def ver_mis_alumnos():
     y1 = db.engine.execute(consultaSQL1)
 
     #Se pregunta por todos los alumnos contagiados de un profesor en su sala
-    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con ORDER BY Apellidos, Nombres"
+    consultaSQL2 = "SELECT RUT_Alu, Apellidos, Nombres, Fecha, resultado, Fecha_termino FROM Contagio,(" + consultaSQL1 + ") AS q1 WHERE q1.RUT_Alu = Contagio.RUT_Con ORDER BY Apellidos, Nombres"
     y2 = db.engine.execute(consultaSQL2)
 
     #Se pregunta por todos los alumnos sanos de un profesor en su sala
@@ -1088,6 +1100,13 @@ def get_contagio_activo(rut):
 
 
     return jsonify(message="No se encontro")
+
+def fecha_terminoContagio(fecha):
+    ahora = datetime.strptime(str(fecha), '%Y-%m-%d')
+    dentroDe14Dias = ahora + timedelta(days = 14)
+    return dentroDe14Dias
+    pass
+
 
 ### START
 if __name__ == "__main__":

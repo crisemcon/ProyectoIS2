@@ -20,6 +20,7 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import { styled } from "@material-ui/core/styles";
 import IconButton from "@material-ui/core/IconButton";
 import Collapse from "@material-ui/core/Collapse";
+import ListaPersonasContagiadas from "../components/salas/ListaPersonasContagiadas";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -130,7 +131,7 @@ const Salas = () => {
                             No hay contagiados en esta sala
                           </Typography>
                         ) : (
-                          <ListaPersonas
+                          <ListaPersonasContagiadas
                             personas={salas[selectedSala].Contagiados}
                           />
                         )}

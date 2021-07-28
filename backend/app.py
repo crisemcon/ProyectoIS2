@@ -980,7 +980,7 @@ def get_estados_salas():
         for con in eng_cont:
             if con.RUT in personas:
                 contagio = True
-                cont.append({"RUT": con.RUT,"Nombres":con.Nombres, "Apellidos":con.Apellidos, "Fecha Contagio":con.Fecha, "Fecha término": con.Fecha_termino, "Resultado PCR": con.resultado})
+                cont.append({"RUT": con.RUT,"Nombres":con.Nombres, "Apellidos":con.Apellidos, "Fecha_Contagio":con.Fecha, "Fecha_termino": con.Fecha_termino, "Resultado PCR": con.resultado})
                 ruts_cont.add(con.RUT)
 
         #No Contagiados

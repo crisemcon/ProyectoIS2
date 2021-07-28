@@ -16,6 +16,7 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import { styled } from "@material-ui/core/styles";
 import IconButton from "@material-ui/core/IconButton";
 import Collapse from "@material-ui/core/Collapse";
+import ListaAlumnosContagiados from "../components/alumnos/ListaAlumnosContagiados";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -106,7 +107,7 @@ const Alumnos = () => {
                         No hay alumnos contagiados en esta sala
                       </Typography>
                     ) : (
-                      <ListaAlumnos alumnos={contagiados} />
+                      <ListaAlumnosContagiados alumnos={contagiados} />
                     )}
                   </Box>
                 </Collapse>

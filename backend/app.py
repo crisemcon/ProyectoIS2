@@ -538,19 +538,41 @@ def contagio_pupilo():
         response = jsonify({"error": "Fecha requerido"})
         response.status_code = 400
         return response
-
-    if 'PCR' in request_data:
-        # None es null en python
-        if request_data['PCR']== None or request_data['PCR']== True or request_data['PCR']== False: 
-            resPCR = request_data['PCR']
-        else: 
-            response = jsonify({"error": "Formato incorrecto.", "Formato":"true: PCR positivo. false: PCR negativo. null: PCR no realizado."})
-            response.status_code = 400
-            return response 
+    
+    if 'resultado' in request_data:
+        resultadoPCR = request_data['resultado']
     else: 
-        response = jsonify({"error": "Resultado de PCR requerido.", "Formato":"true: PCR positivo. false: PCR negativo. null: PCR no realizado."})
+        response = jsonify({"error": "Resultado PCR requerido"})
         response.status_code = 400
         return response
+
+    if not resultadoPCR:
+        resultadoPCR = -1
+    try:
+        resultadoPCR = int(resultadoPCR)
+    except ValueError as e:
+        print("convert_anything_to_int: converting invalid value",resultadoPCR, "into 0")
+        resultadoPCR = -1
+
+    if (int(resultadoPCR) == 0):
+        newPCR = bool(0)
+    elif (int(resultadoPCR) == 1):
+        newPCR = bool(1)
+    else:
+        newPCR = None
+
+    # if 'PCR' in request_data:
+    #     # None es null en python
+    #     if request_data['PCR']== None or request_data['PCR']== True or request_data['PCR']== False: 
+    #         resPCR = request_data['PCR']
+    #     else: 
+    #         response = jsonify({"error": "Formato incorrecto.", "Formato":"true: PCR positivo. false: PCR negativo. null: PCR no realizado."})
+    #         response.status_code = 400
+    #         return response 
+    # else: 
+    #     response = jsonify({"error": "Resultado de PCR requerido.", "Formato":"true: PCR positivo. false: PCR negativo. null: PCR no realizado."})
+    #     response.status_code = 400
+    #     return response
 
     #Revisar que son apoderados y alumnos, y que están relacionados
     UserType = check_user_type(RUT)
@@ -572,7 +594,7 @@ def contagio_pupilo():
         return response
 
     #Crear contagio
-    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = resPCR, Fecha_termino = str(Fechafinal) )
+    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = newPCR, Fecha_termino = str(Fechafinal) )
 
 
     try:

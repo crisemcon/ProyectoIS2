@@ -34,7 +34,9 @@ const SugerenciaSala = (props) => {
       <CardHeader
         avatar={<Avatar sx={{ bgcolor: color }}> </Avatar>}
         title={props.nombre}
+        titleTypographyProps={{variant: "h5"}}
         subheader={props.contagiados === 1 ? props.contagiados + " Contagiado" : props.contagiados + " Contagiados"}
+        subheaderTypographyProps={{variant: "h4"}}
       />
       <CardContent>
         <Grid container spacing={3} sx={{ justifyContent: "space-between" }}>
@@ -42,6 +44,13 @@ const SugerenciaSala = (props) => {
             <Typography color="textPrimary" variant="body1">
               {props.sugerencia}
             </Typography>
+            {
+              props.lastDate !== null  ? <Typography color="textSecondary" variant="body1">
+              
+              Fecha de termino ultimo contagio: {props.lastDate.toISOString().substring(0, 10)}
+            </Typography> : null
+            }
+            
           </Grid>
         </Grid>
       </CardContent>

@@ -628,6 +628,13 @@ def informar_contagio():
 
 
     print("resultado pcr", resultadoPCR)
+    if not resultadoPCR:
+        resultadoPCR = -1
+    try:
+        resultadoPCR = int(resultadoPCR)
+    except ValueError as e:
+        print("convert_anything_to_int: converting invalid value",resultadoPCR, "into 0")
+        resultadoPCR = -1
 
     if (int(resultadoPCR) == 0):
         newPCR = bool(0)
@@ -645,31 +652,49 @@ def informar_contagio():
     #falta cambiar el 5 por el auto-increasing 1
     nuevoContagio = Contagio(RUT_Con = RUT, Fecha = FechaContagio, revisada = 0, resultado = newPCR, Fecha_termino = str(Fechafinal))
 
+    flag = 0
     if((int(CE) == 1) and (UserType == 3)):
+        flag = 1
         #se contagia el grupo estecho
         #esto quiere decir que se revisan los apoderados
         #y los posibles pupilos
 
         #en este caso, solo apoderado es quien debe preocuparse de esto
         #por esto verificamos que el tipo de user sea apoderado
-        apoderadoContagiar = Apoderado.query.filter_by(RUT_Apo = RUT).all()
-        #for apod in apoderadoContagiar:
+        apoderadoContagiar = Apoderado.query.filter_by(RUT_Apo=RUT).with_entities(Apoderado.RUT_Apo, Apoderado.RUT_Pup).all()
+
+        for apod in apoderadoContagiar:
+            print(apod.RUT_Pup)
+        contagiosPupilos = []
+        for apod in apoderadoContagiar:
             #seleccionamos a todos los pupilos que esten bajo este apoderado
             #guardamos su rut para informar el contagio
-            #apod.RUT_Apo
-
+            #rutPupilos.append(apod.RUT_Pup)
+            contagiosPupilos.append(Contagio(RUT_Con = apod.RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = None, Fecha_termino = str(Fechafinal)))
+    
         #Alumno.query.filter_by(RUT_Alu = 0).all()
 
 
     try:
         db.session.add(nuevoContagio)
+        if(flag==1):
+            for pup in contagiosPupilos:
+                db.session.add(pup)
+            contagiosPupilos.append(nuevoContagio)
         db.session.commit()
     except Exception as error:
         response = jsonify({"error": str(error.orig)})
         response.status_code = 400
         return response
 
-    return contagio_schema.jsonify(nuevoContagio)
+    #print(type(contagio_schema.jsonify(nuevoContagio)))
+    if(flag==1):
+        return contagios_schema.jsonify(contagiosPupilos)
+    else:
+        return contagio_schema.jsonify(nuevoContagio)
+
+
+
 
 #Esta ruta retorna
 #{

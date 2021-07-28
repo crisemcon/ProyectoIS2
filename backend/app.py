@@ -869,7 +869,7 @@ Response:
         Profes 
         Alumnos 
         Contagios
-            Fecha
+            Fecha ini y termino
             PCR
         No Contagiados
         EStados Sala

@@ -460,11 +460,9 @@ Response:
         "Apellidos": "Rutledge Knapp",
         "Nombres": "Paula Bryar",
         "RUT": "24169868-8"
-    }
+    }   
 ]
 '''
-
-##PROBAR CON RUT: 41366409-8
 
 @app.route('/pupiloDeAp', methods = ['GET'])
 def get_pupilos():
@@ -498,13 +496,21 @@ Request:
 {
     "RUT": "41366409-8",
     "RUT_Alu": "24169868-8",
-    "Fecha": "2021-06-17"
+    "Fecha": "2021-06-17",
+    "PCR": true
 }
+
+    - true: PCR positivo. 
+    - false: PCR negativo. 
+    - null: PCR no realizado.
+
 Response:
 {
-    "Contagio_ID": 1,
+    "Contagio_ID": 13,
     "Fecha": "2021-06-17",
+    "Fecha_termino": "2021-07-01",
     "RUT_Con": "24169868-8",
+    "resultado": true,
     "revisada": false
 }
 '''
@@ -528,9 +534,21 @@ def contagio_pupilo():
     if 'Fecha' in request_data:
         FechaContagio = request_data['Fecha']
         Fechafinal = fecha_terminoContagio(request_data['Fecha'])
-
     else: 
         response = jsonify({"error": "Fecha requerido"})
+        response.status_code = 400
+        return response
+
+    if 'PCR' in request_data:
+        # None es null en python
+        if request_data['PCR']== None or request_data['PCR']== True or request_data['PCR']== False: 
+            resPCR = request_data['PCR']
+        else: 
+            response = jsonify({"error": "Formato incorrecto.", "Formato":"true: PCR positivo. false: PCR negativo. null: PCR no realizado."})
+            response.status_code = 400
+            return response 
+    else: 
+        response = jsonify({"error": "Resultado de PCR requerido.", "Formato":"true: PCR positivo. false: PCR negativo. null: PCR no realizado."})
         response.status_code = 400
         return response
 
@@ -553,10 +571,8 @@ def contagio_pupilo():
         response.status_code = 403 #Forbidden
         return response
 
-    #consultaSQLFechaTermino = "SELECT DATE_ADD ('" + FechaContagio + "', INTERVAL +14 DAY);"
-    #eng2 = db.engine.execute(consultaSQLFechaTermino)
     #Crear contagio
-    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = None, Fecha_termino = str(Fechafinal) )#puse None temporalmente para trabajar
+    cont = Contagio(RUT_Con = RUT_Pup, Fecha = FechaContagio, revisada = 0, resultado = resPCR, Fecha_termino = str(Fechafinal) )
 
 
     try:
@@ -568,6 +584,7 @@ def contagio_pupilo():
         return response
 
     return contagio_schema.jsonify(cont)
+
 
 @app.route('/US2', methods = ['POST'])
 def informar_contagio():
@@ -844,11 +861,18 @@ de salubridad que los involucra.
 
 Request:
 {
-    RUT: "12532639-0" (RUT ADMIN)
+    "RUT": "12532639-0" (RUT ADMIN) (COMO PARAM)
 }
 Response:
 {
-    Salas profes alumnos contagios
+    Salas
+        Profes 
+        Alumnos 
+        Contagios
+            Fecha
+            PCR
+        No Contagiados
+        EStados Sala
 }
 '''
 @app.route('/US6', methods = ['GET'])
@@ -901,15 +925,15 @@ def get_estados_salas():
 
         #Contagios
         #se itera por Contagio primero, asumiendo que es la que tendrá menos cantidad de elementos que en Personas de la sala
-        consultaSQLaux = "SELECT RUT_Con FROM Contagio"
-        consultaSQL_cont = "SELECT RUT, Nombres, Apellidos FROM Persona, ("+consultaSQLaux+") AS q1 WHERE q1.RUT_Con = Persona.RUT;"
+        consultaSQLaux = "SELECT RUT_Con, Fecha, Fecha_termino, resultado FROM Contagio"
+        consultaSQL_cont = "SELECT p.RUT, p.Nombres, p.Apellidos, c.Fecha, c.Fecha_termino, c.resultado FROM Persona AS p, ("+consultaSQLaux+") AS c WHERE c.RUT_Con = p.RUT;"
         eng_cont = db.engine.execute(consultaSQL_cont)
         cont = []
         ruts_cont = set()
         for con in eng_cont:
             if con.RUT in personas:
                 contagio = True
-                cont.append({"RUT": con.RUT,"Nombres":con.Nombres, "Apellidos":con.Apellidos})
+                cont.append({"RUT": con.RUT,"Nombres":con.Nombres, "Apellidos":con.Apellidos, "Fecha Contagio":con.Fecha, "Fecha término": con.Fecha_termino, "Resultado PCR": con.resultado})
                 ruts_cont.add(con.RUT)
 
         #No Contagiados

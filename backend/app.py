@@ -11,7 +11,7 @@ from sqlalchemy import update
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/ProyectoIS2'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root@localhost/SchoolContactTracing'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)

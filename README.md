@@ -88,7 +88,7 @@ pip install flask_cors
 pip install mysqlclient
 ```
 
-Install the frontend dependencies navigating ot the frontend directory and executing:
+Install the frontend dependencies navigating to the frontend directory and executing:
 ```
 npm install
 ```
@@ -104,7 +104,7 @@ To run the server application, navigate to the backend folder and run this in th
 ```
 python3 app.py
 ```
-To run the client application, navigate to the getdo-client folder and run this in another command-line:
+To run the client application, navigate to the frontend folder and run this in another command-line:
 ```
 npm start
 ```
@@ -185,4 +185,4 @@ See also the list of [contributors](https://github.com/kylelobo/The-Documentatio
 
 ---
 ## 🎉 Acknowledgements <a name = "acknowledgement"></a>
-- [Material Kit - React](https://github.com/devias-io/material-kit-react) Free React Admin Dashboard made with Material UI's components, React and of course create-react-app to boost app development process.
+- [Material Kit - React](https://github.com/devias-io/material-kit-react) Free React Admin Dashboard made with Material UI's components, React and create-react-app to boost app development process.
